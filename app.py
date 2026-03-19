@@ -267,6 +267,7 @@ def list_memories(
     category: Optional[str] = None,
     tag: Optional[str] = None,
     sensitive: Optional[bool] = None,
+    sort: Optional[str] = Query(default=None, pattern="^(recent|accessed|popular)$"),
     limit: int = Query(default=50, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
 ):
@@ -285,6 +286,13 @@ def list_memories(
 
     where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
 
+    if sort == "accessed":
+        order = "is_pinned DESC, last_accessed_at DESC NULLS LAST"
+    elif sort == "popular":
+        order = "is_pinned DESC, access_count DESC"
+    else:
+        order = "is_pinned DESC, created_at DESC"
+
     with get_conn() as conn:
         total = conn.execute(
             f"SELECT COUNT(*) FROM memory {where}", params
@@ -293,9 +301,10 @@ def list_memories(
         rows = conn.execute(
             f"""
             SELECT id, raw_text, title, category, tags, data_types,
-                   is_sensitive, is_pinned, created_at, updated_at
+                   is_sensitive, is_pinned, created_at, updated_at,
+                   last_accessed_at, access_count
             FROM memory {where}
-            ORDER BY is_pinned DESC, created_at DESC
+            ORDER BY {order}
             LIMIT ? OFFSET ?
             """,
             params + [limit, offset],
@@ -308,6 +317,7 @@ def list_memories(
         d["data_types"] = json.loads(d["data_types"] or "[]")
         d["is_sensitive"] = bool(d["is_sensitive"])
         d["is_pinned"] = bool(d["is_pinned"])
+        d["access_count"] = d.get("access_count") or 0
         items.append(d)
 
     return {"total": total, "items": items}
@@ -323,14 +333,25 @@ def get_memory(mem_id: str):
         row = conn.execute(
             """
             SELECT id, raw_text, title, category, tags, data_types,
-                   extracted_entities, is_sensitive, is_pinned, created_at, updated_at
+                   extracted_entities, is_sensitive, is_pinned, created_at, updated_at,
+                   last_accessed_at, access_count
             FROM memory WHERE id = ?
             """,
             (mem_id,),
         ).fetchone()
 
-    if row is None:
-        raise HTTPException(status_code=404, detail="Memory not found")
+        if row is None:
+            raise HTTPException(status_code=404, detail="Memory not found")
+
+        conn.execute(
+            """
+            UPDATE memory
+            SET access_count = COALESCE(access_count, 0) + 1,
+                last_accessed_at = datetime('now')
+            WHERE id = ?
+            """,
+            (mem_id,),
+        )
 
     d = _row_to_dict(row)
     d["tags"] = json.loads(d["tags"] or "[]")
@@ -338,6 +359,7 @@ def get_memory(mem_id: str):
     d["extracted_entities"] = json.loads(d["extracted_entities"] or "{}")
     d["is_sensitive"] = bool(d["is_sensitive"])
     d["is_pinned"] = bool(d["is_pinned"])
+    d["access_count"] = d.get("access_count") or 0
     return d
 
 
@@ -487,6 +509,15 @@ async def recall(body: RecallRequest):
             f"SELECT id, raw_text FROM memory WHERE id IN ({placeholders})",
             top_ids,
         ).fetchall()
+        conn.execute(
+            f"""
+            UPDATE memory
+            SET access_count = COALESCE(access_count, 0) + 1,
+                last_accessed_at = datetime('now')
+            WHERE id IN ({placeholders})
+            """,
+            top_ids,
+        )
 
     id_to_text = {r["id"]: r["raw_text"] for r in detail_rows}
 

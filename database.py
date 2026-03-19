@@ -25,7 +25,9 @@ def init_db() -> None:
                 is_pinned           INTEGER DEFAULT 0,
                 embedding           BLOB,
                 created_at          TEXT DEFAULT (datetime('now')),
-                updated_at          TEXT
+                updated_at          TEXT,
+                last_accessed_at    TEXT,
+                access_count        INTEGER DEFAULT 0
             );
 
             CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts USING fts5(
@@ -47,11 +49,16 @@ def init_db() -> None:
 
         """)
         # Migrate existing DBs — safe no-op if column already present
-        try:
-            conn.execute("ALTER TABLE memory ADD COLUMN is_pinned INTEGER DEFAULT 0")
-            conn.commit()
-        except Exception:
-            pass
+        for migration in [
+            "ALTER TABLE memory ADD COLUMN is_pinned INTEGER DEFAULT 0",
+            "ALTER TABLE memory ADD COLUMN last_accessed_at TEXT",
+            "ALTER TABLE memory ADD COLUMN access_count INTEGER DEFAULT 0",
+        ]:
+            try:
+                conn.execute(migration)
+                conn.commit()
+            except Exception:
+                pass
         conn.executescript("""
             CREATE TRIGGER IF NOT EXISTS memory_ad AFTER DELETE ON memory BEGIN
                 INSERT INTO memory_fts(memory_fts, rowid, id, raw_text, title, tags)

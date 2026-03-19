@@ -1188,6 +1188,12 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
       <option value="">All Categories</option>
     </select>
     <div class="filter-divider"></div>
+    <select id="sortSelect" class="filter-select" onchange="applySort()">
+      <option value="recent">Most Recent</option>
+      <option value="accessed">Last Accessed</option>
+      <option value="popular">Most Accessed</option>
+    </select>
+    <div class="filter-divider"></div>
     <button class="sensitive-chip" id="sensitiveToggle" onclick="toggleSensitive()">
       🔒 Sensitive only
     </button>
@@ -1274,6 +1280,8 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
         <div class="meta-grid">
           <div class="meta-item">Created <span id="detailCreated"></span></div>
           <div class="meta-item">Updated <span id="detailUpdated"></span></div>
+          <div class="meta-item">Last accessed <span id="detailLastAccessed"></span></div>
+          <div class="meta-item">Times recalled <span id="detailAccessCount"></span></div>
         </div>
       </div>
 
@@ -1298,6 +1306,7 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
 const S = {
   tab: 'store',
   filters: { category: '', tag: '', sensitive: false },
+  sort: 'recent',
   page: 0,
   pageSize: 12,
   currentDetailId: null,
@@ -1652,6 +1661,7 @@ async function loadBrowse() {
   if (S.filters.category) p.set('category', S.filters.category);
   if (S.filters.tag)      p.set('tag', S.filters.tag);
   if (S.filters.sensitive) p.set('sensitive', 'true');
+  if (S.sort && S.sort !== 'recent') p.set('sort', S.sort);
 
   try {
     const data = await api('GET', `/api/memory?${p}`);
@@ -1733,6 +1743,10 @@ function applyFilters() {
   S.filters.category = document.getElementById('categoryFilter').value;
   S.page = 0; loadBrowse();
 }
+function applySort() {
+  S.sort = document.getElementById('sortSelect').value;
+  S.page = 0; loadBrowse();
+}
 function toggleSensitive() {
   S.filters.sensitive = !S.filters.sensitive;
   document.getElementById('sensitiveToggle').classList.toggle('active', S.filters.sensitive);
@@ -1751,7 +1765,9 @@ function toggleTagFilter(tag, btn) {
 }
 function clearFilters() {
   S.filters = { category: '', tag: '', sensitive: false };
+  S.sort = 'recent';
   document.getElementById('categoryFilter').value = '';
+  document.getElementById('sortSelect').value = 'recent';
   document.getElementById('sensitiveToggle').classList.remove('active');
   document.querySelectorAll('#tagPills .tag-chip').forEach(b => b.classList.remove('active'));
   S.page = 0; loadBrowse();
@@ -1845,6 +1861,8 @@ async function openDetailModal(id) {
 
     document.getElementById('detailCreated').textContent = fmtDate(m.created_at);
     document.getElementById('detailUpdated').textContent = m.updated_at ? fmtDate(m.updated_at) : '—';
+    document.getElementById('detailLastAccessed').textContent = m.last_accessed_at ? fmtDate(m.last_accessed_at) : '—';
+    document.getElementById('detailAccessCount').textContent = (m.access_count || 0).toLocaleString();
 
     const pinBtn = document.getElementById('detailPinBtn');
     pinBtn.classList.toggle('pinned', !!m.is_pinned);
