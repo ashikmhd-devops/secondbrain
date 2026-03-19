@@ -230,6 +230,35 @@ async def create_memory(body: MemoryCreate):
 
 
 # ---------------------------------------------------------------------------
+# POST /api/memory/check-duplicate
+# ---------------------------------------------------------------------------
+
+@api.post("/memory/check-duplicate")
+async def check_duplicate(body: MemoryCreate, threshold: float = 0.75):
+    q_emb = np.array(await get_embedding(body.raw_text), dtype=np.float32)
+
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT id, title, category, is_sensitive, embedding FROM memory WHERE embedding IS NOT NULL"
+        ).fetchall()
+
+    matches = []
+    for row in rows:
+        score = _cosine(q_emb, _blob_to_emb(row["embedding"]))
+        if score >= threshold:
+            matches.append({
+                "id": row["id"],
+                "title": row["title"],
+                "category": row["category"],
+                "similarity": round(score, 4),
+                "is_sensitive": bool(row["is_sensitive"]),
+            })
+
+    matches.sort(key=lambda x: x["similarity"], reverse=True)
+    return {"duplicates": matches[:5]}
+
+
+# ---------------------------------------------------------------------------
 # GET /api/memory
 # ---------------------------------------------------------------------------
 

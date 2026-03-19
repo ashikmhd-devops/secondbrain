@@ -541,6 +541,39 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
 .result-types { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* ─────────────────────────────────────────────────────────────────
+   DUPLICATE WARNING
+───────────────────────────────────────────────────────────────── */
+@keyframes warnIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: none; }
+}
+.dup-warning {
+  background: rgba(249,199,79,0.07);
+  border: 1px solid rgba(249,199,79,0.3);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  margin-top: 16px;
+  animation: warnIn var(--dur-med) var(--ease-dcel);
+}
+.dup-warning-header {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: var(--amber);
+  margin-bottom: 12px;
+}
+.dup-item {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 9px 12px;
+  background: var(--surf-low); border: 1px solid var(--outline-var);
+  border-radius: var(--r-md); margin-bottom: 6px;
+  cursor: pointer;
+  transition: border-color var(--dur-short) var(--ease-std);
+}
+.dup-item:hover { border-color: rgba(197,198,255,0.25); }
+.dup-item-title { font-size: 13px; font-weight: 500; color: var(--on-surface); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dup-score { font-size: 13px; font-weight: 700; color: var(--amber); flex-shrink: 0; }
+.dup-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+/* ─────────────────────────────────────────────────────────────────
    UPLOAD ZONE
 ───────────────────────────────────────────────────────────────── */
 .upload-row {
@@ -1069,13 +1102,15 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
       </div>
     </div>
 
+    <div id="dupWarning" class="hidden"></div>
+
     <div class="save-actions">
       <button class="btn btn-filled" id="saveBtn" onclick="saveMemory()">
         Save to Memory
       </button>
       <div class="save-loading hidden" id="saveStatus">
         <span class="spinner"></span>
-        <span>Analyzing and storing…</span>
+        <span id="saveStatusMsg">Checking for duplicates…</span>
       </div>
     </div>
     <div id="saveError" class="hidden"></div>
@@ -1452,19 +1487,42 @@ async function loadTagPills() {
 /* ────────────────────────────────────────────────
    STORE TAB
 ──────────────────────────────────────────────── */
-async function saveMemory() {
+async function saveMemory(force = false) {
   const text = document.getElementById('storeInput').value.trim();
   if (!text) return;
 
-  const btn    = document.getElementById('saveBtn');
-  const status = document.getElementById('saveStatus');
-  const errEl  = document.getElementById('saveError');
-  const result = document.getElementById('saveResult');
+  const btn       = document.getElementById('saveBtn');
+  const status    = document.getElementById('saveStatus');
+  const statusMsg = document.getElementById('saveStatusMsg');
+  const errEl     = document.getElementById('saveError');
+  const result    = document.getElementById('saveResult');
 
   btn.disabled = true;
   status.classList.remove('hidden');
   result.classList.add('hidden');
   errEl.className = 'hidden';
+
+  // --- Duplicate check (skipped when force-saving) ---
+  if (!force) {
+    statusMsg.textContent = 'Checking for duplicates…';
+    try {
+      const dup = await api('POST', '/api/memory/check-duplicate', { raw_text: text });
+      if (dup.duplicates.length > 0) {
+        btn.disabled = false;
+        status.classList.add('hidden');
+        showDupWarning(dup.duplicates);
+        return;
+      }
+    } catch (e) {
+      btn.disabled = false;
+      status.classList.add('hidden');
+      showError('saveError', 'Duplicate check failed: ' + e.message);
+      return;
+    }
+  }
+
+  hideDupWarning();
+  statusMsg.textContent = 'Analyzing and storing…';
 
   const warnTimer = setTimeout(() => {
     status.innerHTML = '<span class="spinner"></span><span>Still working — model may be loading…</span>';
@@ -1886,6 +1944,40 @@ async function loadUpcomingEvents() {
   } catch {
     list.innerHTML = '<div class="events-empty">Could not load events.</div>';
   }
+}
+
+/* ────────────────────────────────────────────────
+   DUPLICATE WARNING
+──────────────────────────────────────────────── */
+function showDupWarning(dupes) {
+  const el = document.getElementById('dupWarning');
+  const items = dupes.map(d => `
+    <div class="dup-item" onclick="openDetailModal('${h(d.id)}')">
+      <div class="dup-item-title">${d.is_sensitive ? '🔒 ' : ''}${h(d.title || 'Untitled')}</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span class="badge ${catClass(d.category)}">${h(d.category)}</span>
+        <span class="dup-score">${Math.round(d.similarity * 100)}%</span>
+      </div>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div class="dup-warning">
+      <div class="dup-warning-header">
+        ⚠ Very similar ${dupes.length === 1 ? 'memory' : 'memories'} already ${dupes.length === 1 ? 'exists' : 'exist'}
+      </div>
+      ${items}
+      <div class="dup-actions">
+        <button class="btn btn-tonal btn-sm" onclick="saveMemory(true)">Save anyway</button>
+        <button class="btn btn-text btn-sm" onclick="hideDupWarning()">Cancel</button>
+      </div>
+    </div>`;
+  el.classList.remove('hidden');
+}
+
+function hideDupWarning() {
+  const el = document.getElementById('dupWarning');
+  el.classList.add('hidden');
+  el.innerHTML = '';
 }
 
 /* ────────────────────────────────────────────────
