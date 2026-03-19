@@ -9,7 +9,7 @@ from typing import Optional
 
 import httpx
 import numpy as np
-from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, FastAPI, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -674,6 +674,82 @@ def upcoming_events(limit: int = Query(default=10, ge=1, le=50)):
 
     events.sort(key=lambda x: x["days_left"])
     return {"events": events[:limit]}
+
+
+# ---------------------------------------------------------------------------
+# POST /api/upload  — extract text from PDF / image / plain text
+# ---------------------------------------------------------------------------
+
+_PDF_EXTS   = {"pdf"}
+_IMAGE_EXTS = {"png", "jpg", "jpeg", "webp", "tiff", "tif", "bmp", "gif"}
+_TEXT_EXTS  = {"txt", "md", "csv", "log"}
+_MAX_BYTES  = 20 * 1024 * 1024  # 20 MB
+
+
+def _extract_pdf(content: bytes) -> str:
+    try:
+        from io import BytesIO
+        from pdfminer.high_level import extract_text
+        text = extract_text(BytesIO(content))
+        return (text or "").strip()
+    except ImportError:
+        raise HTTPException(status_code=501, detail="PDF support unavailable. Run: pip install pdfminer.six")
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Could not read PDF: {e}")
+
+
+def _extract_image(content: bytes) -> str:
+    try:
+        import pytesseract
+        from PIL import Image
+        from io import BytesIO
+        import os
+        _TESS_CANDIDATES = [
+            "/opt/homebrew/bin/tesseract",   # macOS Apple Silicon (Homebrew)
+            "/usr/local/bin/tesseract",       # macOS Intel (Homebrew)
+            "/usr/bin/tesseract",             # Linux
+        ]
+        for _p in _TESS_CANDIDATES:
+            if os.path.exists(_p):
+                pytesseract.pytesseract.tesseract_cmd = _p
+                break
+        img = Image.open(BytesIO(content))
+        text = pytesseract.image_to_string(img)
+        return (text or "").strip()
+    except ImportError:
+        raise HTTPException(
+            status_code=501,
+            detail="OCR unavailable. Install dependencies: pip install pytesseract Pillow  |  brew install tesseract",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Could not read image: {e}")
+
+
+@api.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    content = await file.read()
+    if len(content) > _MAX_BYTES:
+        raise HTTPException(status_code=413, detail="File too large (max 20 MB)")
+
+    filename = (file.filename or "").strip()
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+
+    if ext in _PDF_EXTS:
+        text = _extract_pdf(content)
+    elif ext in _IMAGE_EXTS:
+        text = _extract_image(content)
+    elif ext in _TEXT_EXTS:
+        text = content.decode("utf-8", errors="replace").strip()
+    else:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported file type '.{ext}'. Supported: pdf, png, jpg, jpeg, webp, tiff, bmp, txt, md, csv",
+        )
+
+    if not text:
+        raise HTTPException(status_code=422, detail="No text could be extracted from this file.")
+
+    return {"text": text, "filename": filename, "chars": len(text)}
 
 
 # ---------------------------------------------------------------------------

@@ -541,6 +541,49 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
 .result-types { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* ─────────────────────────────────────────────────────────────────
+   UPLOAD ZONE
+───────────────────────────────────────────────────────────────── */
+.upload-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 10px; flex-wrap: wrap;
+}
+.upload-label {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 16px; border-radius: var(--r-full);
+  border: 1px dashed var(--outline-var);
+  background: transparent; color: var(--on-surf-var);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: border-color var(--dur-short) var(--ease-std),
+              color var(--dur-short) var(--ease-std),
+              background var(--dur-short) var(--ease-std);
+  user-select: none;
+}
+.upload-label:hover { border-color: var(--primary); color: var(--primary); background: var(--state-hover); }
+
+.drop-zone { position: relative; }
+.drop-zone.dragging textarea { border-color: var(--primary); border-width: 2px; background: rgba(48,50,188,0.06); }
+.drop-zone.dragging::after {
+  content: 'Drop file to extract text';
+  position: absolute; inset: 0; border-radius: var(--r-lg);
+  background: rgba(48,50,188,0.22);
+  border: 2px dashed var(--primary);
+  color: var(--primary); font-size: 15px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; z-index: 2;
+}
+.file-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: var(--r-full);
+  background: var(--secondary-cont); color: var(--on-secondary-c);
+  font-size: 12px; font-weight: 500;
+}
+.file-badge-x {
+  cursor: pointer; opacity: 0.6; font-size: 14px; line-height: 1;
+  transition: opacity var(--dur-short) var(--ease-std);
+}
+.file-badge-x:hover { opacity: 1; }
+
+/* ─────────────────────────────────────────────────────────────────
    EVENTS WIDGET
 ───────────────────────────────────────────────────────────────── */
 .events-section { margin-top: 36px; }
@@ -1005,9 +1048,25 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
       <p>Anything goes — notes, credentials, ideas, contacts, events…</p>
     </div>
 
-    <div class="field-wrap">
-      <textarea id="storeInput" placeholder=" " rows="7"></textarea>
-      <label class="field-label" for="storeInput">Type anything and hit Save…</label>
+    <div class="drop-zone" id="dropZone">
+      <div class="field-wrap">
+        <textarea id="storeInput" placeholder=" " rows="7"></textarea>
+        <label class="field-label" for="storeInput">Type anything and hit Save…</label>
+      </div>
+    </div>
+
+    <div class="upload-row">
+      <label class="upload-label" for="fileInput">
+        📎 Attach file
+        <input type="file" id="fileInput" style="display:none"
+          accept=".pdf,.png,.jpg,.jpeg,.webp,.tiff,.tif,.bmp,.gif,.txt,.md,.csv"
+          onchange="handleFileSelect(this.files[0])"/>
+      </label>
+      <div id="fileBadge" class="hidden"></div>
+      <div class="save-loading hidden" id="extractStatus">
+        <span class="spinner"></span>
+        <span id="extractMsg">Extracting text…</span>
+      </div>
     </div>
 
     <div class="save-actions">
@@ -1827,6 +1886,71 @@ async function loadUpcomingEvents() {
   } catch {
     list.innerHTML = '<div class="events-empty">Could not load events.</div>';
   }
+}
+
+/* ────────────────────────────────────────────────
+   FILE UPLOAD / EXTRACTION
+──────────────────────────────────────────────── */
+(function () {
+  const dropZone   = document.getElementById('dropZone');
+  const fileInput  = document.getElementById('fileInput');
+
+  // Drag-and-drop
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragging'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragging'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragging');
+    const file = e.dataTransfer?.files?.[0];
+    if (file) handleFileSelect(file);
+  });
+})();
+
+async function handleFileSelect(file) {
+  if (!file) return;
+
+  const badge      = document.getElementById('fileBadge');
+  const extractSt  = document.getElementById('extractStatus');
+  const extractMsg = document.getElementById('extractMsg');
+  const errEl      = document.getElementById('saveError');
+
+  errEl.className = 'hidden';
+  badge.classList.add('hidden');
+  extractMsg.textContent = `Extracting from ${file.name}…`;
+  extractSt.classList.remove('hidden');
+
+  try {
+    const form = new FormData();
+    form.append('file', file);
+
+    const opts = { method: 'POST', body: form };
+    if (S.token) opts.headers = { 'Authorization': `Bearer ${S.token}` };
+    const r = await fetch('/api/upload', opts);
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || `HTTP ${r.status}`);
+
+    document.getElementById('storeInput').value = data.text;
+    // trigger floating-label update
+    document.getElementById('storeInput').dispatchEvent(new Event('input'));
+
+    badge.innerHTML = `
+      <span class="file-badge">
+        📄 ${h(data.filename)} · ${data.chars.toLocaleString()} chars
+        <span class="file-badge-x" onclick="clearFile()" title="Clear">✕</span>
+      </span>`;
+    badge.classList.remove('hidden');
+  } catch (e) {
+    showError('saveError', e.message);
+  } finally {
+    extractSt.classList.add('hidden');
+    document.getElementById('fileInput').value = '';
+  }
+}
+
+function clearFile() {
+  document.getElementById('storeInput').value = '';
+  document.getElementById('fileBadge').classList.add('hidden');
+  document.getElementById('fileInput').value = '';
 }
 
 /* ────────────────────────────────────────────────

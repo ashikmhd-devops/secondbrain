@@ -3,3 +3,6 @@ uvicorn[standard]
 httpx
 numpy
 python-multipart
+pdfminer.six
+Pillow
+pytesseract
