@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 from collections import Counter
 from contextlib import asynccontextmanager
@@ -42,6 +43,14 @@ def _cosine(a: np.ndarray, b: np.ndarray) -> float:
 
 def _row_to_dict(row) -> dict:
     return dict(row)
+
+
+def _fts_query(text: str) -> str | None:
+    """Convert free text to a safe FTS5 OR query over individual words."""
+    words = re.findall(r'\b\w{2,}\b', text)
+    if not words:
+        return None
+    return " OR ".join(f'"{w}"' for w in words[:20])
 
 
 # ---------------------------------------------------------------------------
@@ -255,9 +264,9 @@ def list_memories(
         rows = conn.execute(
             f"""
             SELECT id, raw_text, title, category, tags, data_types,
-                   is_sensitive, created_at, updated_at
+                   is_sensitive, is_pinned, created_at, updated_at
             FROM memory {where}
-            ORDER BY created_at DESC
+            ORDER BY is_pinned DESC, created_at DESC
             LIMIT ? OFFSET ?
             """,
             params + [limit, offset],
@@ -269,6 +278,7 @@ def list_memories(
         d["tags"] = json.loads(d["tags"] or "[]")
         d["data_types"] = json.loads(d["data_types"] or "[]")
         d["is_sensitive"] = bool(d["is_sensitive"])
+        d["is_pinned"] = bool(d["is_pinned"])
         items.append(d)
 
     return {"total": total, "items": items}
@@ -284,7 +294,7 @@ def get_memory(mem_id: str):
         row = conn.execute(
             """
             SELECT id, raw_text, title, category, tags, data_types,
-                   extracted_entities, is_sensitive, created_at, updated_at
+                   extracted_entities, is_sensitive, is_pinned, created_at, updated_at
             FROM memory WHERE id = ?
             """,
             (mem_id,),
@@ -298,6 +308,7 @@ def get_memory(mem_id: str):
     d["data_types"] = json.loads(d["data_types"] or "[]")
     d["extracted_entities"] = json.loads(d["extracted_entities"] or "{}")
     d["is_sensitive"] = bool(d["is_sensitive"])
+    d["is_pinned"] = bool(d["is_pinned"])
     return d
 
 
@@ -373,17 +384,63 @@ def delete_memory(mem_id: str):
 async def recall(body: RecallRequest):
     q_emb = np.array(await get_embedding(body.question), dtype=np.float32)
 
+    # --- Semantic scores ---
     with get_conn() as conn:
         rows = conn.execute(
-            "SELECT id, title, category, is_sensitive, embedding FROM memory WHERE embedding IS NOT NULL"
+            "SELECT id, title, category, is_sensitive, is_pinned, embedding FROM memory WHERE embedding IS NOT NULL"
         ).fetchall()
 
-    scored = []
+    row_map: dict = {}
+    sem_scores: dict[str, float] = {}
     for row in rows:
         emb = _blob_to_emb(row["embedding"])
-        score = _cosine(q_emb, emb)
-        if score >= body.threshold:
-            scored.append((score, row))
+        sem_scores[row["id"]] = _cosine(q_emb, emb)
+        row_map[row["id"]] = row
+
+    # --- FTS scores (best-effort; silently ignored on parse errors) ---
+    fts_scores: dict[str, float] = {}
+    fts_q = _fts_query(body.question)
+    if fts_q:
+        try:
+            with get_conn() as conn:
+                fts_rows = conn.execute(
+                    """
+                    SELECT m.id, memory_fts.rank
+                    FROM memory_fts
+                    JOIN memory m ON m.id = memory_fts.id
+                    WHERE memory_fts MATCH ?
+                    ORDER BY memory_fts.rank
+                    LIMIT 50
+                    """,
+                    (fts_q,),
+                ).fetchall()
+            if fts_rows:
+                ranks = [abs(r["rank"]) for r in fts_rows]
+                max_r = max(ranks) or 1.0
+                for r in fts_rows:
+                    fts_scores[r["id"]] = abs(r["rank"]) / max_r
+                # Fetch metadata for FTS-only hits (no embedding)
+                fts_only = set(fts_scores) - set(row_map)
+                if fts_only:
+                    ph = ",".join("?" * len(fts_only))
+                    with get_conn() as conn:
+                        for r in conn.execute(
+                            f"SELECT id, title, category, is_sensitive, is_pinned FROM memory WHERE id IN ({ph})",
+                            list(fts_only),
+                        ).fetchall():
+                            row_map[r["id"]] = r
+        except Exception:
+            pass  # fall back to semantic-only
+
+    # --- Hybrid merge (α=0.7 semantic, 0.3 FTS) ---
+    alpha = 0.7
+    scored = []
+    for mid in set(sem_scores) | set(fts_scores):
+        if mid not in row_map:
+            continue
+        hybrid = alpha * sem_scores.get(mid, 0.0) + (1 - alpha) * fts_scores.get(mid, 0.0)
+        if hybrid >= body.threshold:
+            scored.append((hybrid, row_map[mid]))
 
     scored.sort(key=lambda x: x[0], reverse=True)
     top = scored[: body.top_k]
@@ -433,11 +490,30 @@ async def recall(body: RecallRequest):
             "category": row["category"],
             "similarity": round(score, 4),
             "is_sensitive": bool(row["is_sensitive"]),
+            "is_pinned": bool(row["is_pinned"]) if "is_pinned" in row.keys() else False,
         }
         for score, row in top
     ]
 
     return {"answer": answer, "sources": sources}
+
+
+# ---------------------------------------------------------------------------
+# POST /api/memory/{id}/pin  — toggle pin
+# ---------------------------------------------------------------------------
+
+@api.post("/memory/{mem_id}/pin")
+def toggle_pin(mem_id: str):
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT is_pinned FROM memory WHERE id = ?", (mem_id,)
+        ).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Memory not found")
+    new_val = 0 if row["is_pinned"] else 1
+    with get_conn() as conn:
+        conn.execute("UPDATE memory SET is_pinned = ? WHERE id = ?", (new_val, mem_id))
+    return {"is_pinned": bool(new_val)}
 
 
 # ---------------------------------------------------------------------------

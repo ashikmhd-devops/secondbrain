@@ -778,6 +778,26 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
 }
 .mem-card:hover .mem-card-actions { opacity: 1; }
 
+/* Pinned state */
+.mem-card.pinned {
+  border-color: rgba(197,198,255,0.25);
+  background: linear-gradient(160deg, rgba(48,50,188,0.1) 0%, var(--surf-low) 60%);
+}
+.pin-indicator {
+  font-size: 12px; opacity: 0.7;
+  transform: rotate(45deg);
+  display: inline-block;
+}
+.btn-pin {
+  background: transparent; color: var(--muted);
+  border-radius: var(--r-full); border: none;
+  padding: 6px 10px; font-size: 13px; cursor: pointer;
+  transition: color var(--dur-short) var(--ease-std),
+              background var(--dur-short) var(--ease-std);
+}
+.btn-pin:hover { background: var(--state-hover); color: var(--primary); }
+.btn-pin.pinned { color: var(--primary); }
+
 /* Pagination */
 .pagination {
   display: flex; justify-content: center; align-items: center;
@@ -1167,6 +1187,7 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
 
     <div class="dialog-footer">
       <div class="dialog-footer-start">
+        <button class="btn-pin" id="detailPinBtn" onclick="togglePinFromDetail()">📌</button>
         <button class="btn btn-tonal btn-sm"    id="editBtn"       onclick="startEdit()">Edit</button>
         <button class="btn btn-filled btn-sm hidden" id="saveEditBtn"   onclick="saveEdit()">Save Changes</button>
         <button class="btn btn-text btn-sm hidden"   id="cancelEditBtn" onclick="cancelEdit()">Cancel</button>
@@ -1546,14 +1567,17 @@ async function loadBrowse() {
 const revealTimers = {};
 function makeCard(m) {
   const card    = document.createElement('div');
-  card.className = 'mem-card';
+  card.className = 'mem-card' + (m.is_pinned ? ' pinned' : '');
+  card.id = `card-${m.id}`;
   const rawId   = `raw-${m.id}`;
   const blurCls = m.is_sensitive ? 'blurred' : '';
   const tags    = (m.tags || []).slice(0, 4).map(t => `<span class="tag-chip">${h(t)}</span>`).join('');
 
   card.innerHTML = `
     <div class="mem-card-header">
-      <div class="mem-card-title" onclick="openDetailModal('${m.id}')">${h(m.title || 'Untitled')}</div>
+      <div class="mem-card-title" onclick="openDetailModal('${m.id}')">
+        ${m.is_pinned ? '<span class="pin-indicator" title="Pinned">📌</span> ' : ''}${h(m.title || 'Untitled')}
+      </div>
       ${m.is_sensitive ? '<span title="Sensitive">🔒</span>' : ''}
     </div>
     <span class="badge ${catClass(m.category)}">${h(m.category)}</span>
@@ -1564,6 +1588,8 @@ function makeCard(m) {
     <div class="mem-card-footer">
       <span class="mem-card-time">${relTime(m.created_at)}</span>
       <div class="mem-card-actions">
+        <button class="btn-pin ${m.is_pinned ? 'pinned' : ''}" id="pin-${m.id}"
+          onclick="togglePin(event,'${m.id}')" title="${m.is_pinned ? 'Unpin' : 'Pin'}">📌</button>
         <button class="btn btn-outlined btn-sm" onclick="openDetailModal('${m.id}')">View</button>
         <button class="btn btn-danger-text btn-sm" onclick="deleteMemory(event,'${m.id}')">Delete</button>
       </div>
@@ -1620,6 +1646,45 @@ function changePage(dir) {
 }
 
 /* ────────────────────────────────────────────────
+   PIN
+──────────────────────────────────────────────── */
+async function togglePin(e, id) {
+  e.stopPropagation();
+  try {
+    const data = await api('POST', `/api/memory/${id}/pin`);
+    // Update card in-place
+    const card = document.getElementById(`card-${id}`);
+    const btn  = document.getElementById(`pin-${id}`);
+    if (card) {
+      card.classList.toggle('pinned', data.is_pinned);
+      // Update title indicator
+      const titleEl = card.querySelector('.mem-card-title');
+      if (titleEl) {
+        titleEl.innerHTML = titleEl.innerHTML.replace(/<span class="pin-indicator"[^>]*>.*?<\/span>\s*/g, '');
+        if (data.is_pinned) titleEl.innerHTML = '<span class="pin-indicator" title="Pinned">📌</span> ' + titleEl.innerHTML;
+      }
+    }
+    if (btn) {
+      btn.classList.toggle('pinned', data.is_pinned);
+      btn.title = data.is_pinned ? 'Unpin' : 'Pin';
+    }
+    // Reload browse to re-sort
+    if (S.tab === 'browse') loadBrowse();
+  } catch (err) { alert('Pin failed: ' + err.message); }
+}
+
+async function togglePinFromDetail() {
+  if (!S.currentDetailId) return;
+  try {
+    const data = await api('POST', `/api/memory/${S.currentDetailId}/pin`);
+    const btn = document.getElementById('detailPinBtn');
+    btn.classList.toggle('pinned', data.is_pinned);
+    btn.title = data.is_pinned ? 'Unpin' : 'Pin';
+    if (S.tab === 'browse') loadBrowse();
+  } catch (err) { alert('Pin failed: ' + err.message); }
+}
+
+/* ────────────────────────────────────────────────
    DELETE
 ──────────────────────────────────────────────── */
 async function deleteMemory(e, id) {
@@ -1663,6 +1728,10 @@ async function openDetailModal(id) {
 
     document.getElementById('detailCreated').textContent = fmtDate(m.created_at);
     document.getElementById('detailUpdated').textContent = m.updated_at ? fmtDate(m.updated_at) : '—';
+
+    const pinBtn = document.getElementById('detailPinBtn');
+    pinBtn.classList.toggle('pinned', !!m.is_pinned);
+    pinBtn.title = m.is_pinned ? 'Unpin' : 'Pin';
 
     const ents  = m.extracted_entities || {};
     const entEl = document.getElementById('detailEntities');

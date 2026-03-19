@@ -22,6 +22,7 @@ def init_db() -> None:
                 data_types          TEXT DEFAULT '[]',
                 extracted_entities  TEXT DEFAULT '{}',
                 is_sensitive        INTEGER DEFAULT 0,
+                is_pinned           INTEGER DEFAULT 0,
                 embedding           BLOB,
                 created_at          TEXT DEFAULT (datetime('now')),
                 updated_at          TEXT
@@ -44,6 +45,14 @@ def init_db() -> None:
                 VALUES (new.rowid, new.id, new.raw_text, new.title, new.tags);
             END;
 
+        """)
+        # Migrate existing DBs — safe no-op if column already present
+        try:
+            conn.execute("ALTER TABLE memory ADD COLUMN is_pinned INTEGER DEFAULT 0")
+            conn.commit()
+        except Exception:
+            pass
+        conn.executescript("""
             CREATE TRIGGER IF NOT EXISTS memory_ad AFTER DELETE ON memory BEGIN
                 INSERT INTO memory_fts(memory_fts, rowid, id, raw_text, title, tags)
                 VALUES ('delete', old.rowid, old.id, old.raw_text, old.title, old.tags);
