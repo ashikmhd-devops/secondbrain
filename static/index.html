@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SecondBrain 🧠</title>
+<style>
+/* ── Reset & Variables ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #0f1117;
+  --surface:     #1a1d27;
+  --surface2:    #222536;
+  --border:      #2a2d3a;
+  --border2:     #363a50;
+  --accent:      #6366f1;
+  --accent-h:    #818cf8;
+  --text:        #e2e8f0;
+  --text-muted:  #94a3b8;
+  --text-dim:    #64748b;
+  --red:         #f87171;
+  --red-bg:      #3b1a1a;
+  --green:       #4ade80;
+  --green-bg:    #1a3324;
+  --radius:      12px;
+  --radius-sm:   8px;
+  --radius-pill: 9999px;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ── Utilities ─────────────────────────────────────────────── */
+.hidden { display: none !important; }
+.flex   { display: flex; }
+.grid   { display: grid; }
+.wrap   { flex-wrap: wrap; }
+.gap1   { gap: 4px; }
+.gap2   { gap: 8px; }
+.gap3   { gap: 12px; }
+.items-center { align-items: center; }
+.items-start  { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+.grow { flex: 1; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.break-all { word-break: break-all; }
+.pre-wrap { white-space: pre-wrap; }
+.bold { font-weight: 600; }
+.small { font-size: 12px; }
+.muted { color: var(--text-muted); }
+.dim   { color: var(--text-dim); }
+.red   { color: var(--red); }
+.green { color: var(--green); }
+.accent { color: var(--accent-h); }
+.uppercase { text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; font-weight: 600; }
+
+/* ── Login overlay ─────────────────────────────────────────── */
+.login-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.login-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 40px 36px;
+  width: 100%; max-width: 380px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+  text-align: center;
+}
+.login-logo { font-size: 40px; margin-bottom: 8px; }
+.login-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.login-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 28px; }
+.login-box input[type=password] {
+  text-align: center; font-size: 15px; letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+.login-box .btn { width: 100%; justify-content: center; padding: 10px; font-size: 14px; }
+.login-error {
+  background: var(--red-bg); border: 1px solid rgba(248,113,113,0.3);
+  border-radius: var(--radius-sm); padding: 8px 12px;
+  color: var(--red); font-size: 13px; margin-top: 10px;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── Navbar ────────────────────────────────────────────────── */
+.navbar {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(15,17,23,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px;
+}
+.navbar-brand {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 18px; font-weight: 700; color: var(--text);
+}
+.status-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #64748b; flex-shrink: 0;
+  transition: background 0.3s;
+}
+.status-dot.green { background: #22c55e; }
+.status-dot.red   { background: #ef4444; }
+.navbar-stats { color: var(--text-muted); font-size: 13px; }
+.navbar-stats span { color: var(--text); font-weight: 600; }
+.navbar-stats .red-num { color: var(--red); }
+
+/* Tabs */
+.tabs {
+  display: flex; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); overflow: hidden;
+}
+.tab-btn {
+  background: var(--surface); color: var(--text-muted);
+  border: none; cursor: pointer;
+  padding: 6px 18px; font-size: 13px; font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+.tab-btn:hover { background: var(--surface2); color: var(--text); }
+.tab-btn.active { background: var(--accent); color: #fff; }
+
+/* ── Main ──────────────────────────────────────────────────── */
+main { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── Form Elements ─────────────────────────────────────────── */
+textarea, input[type=text], select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 14px;
+  padding: 10px 14px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+textarea:focus, input[type=text]:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+textarea { resize: vertical; }
+select { cursor: pointer; }
+
+/* ── Buttons ───────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500; border: none; cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-h); }
+.btn-ghost {
+  background: var(--surface2); color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--border2); }
+.btn-danger {
+  background: transparent; color: var(--red);
+  border: 1px solid rgba(248,113,113,0.25);
+  padding: 5px 10px; font-size: 12px;
+}
+.btn-danger:hover { border-color: var(--red); background: var(--red-bg); }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+/* ── Spinner ───────────────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid rgba(99,102,241,0.3);
+  border-top-color: var(--accent-h);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+.loading-row {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--text-muted); font-size: 13px;
+  padding: 16px 0;
+}
+
+/* ── Cards ─────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.card:hover { border-color: var(--border2); }
+
+/* ── Badges & Pills ────────────────────────────────────────── */
+.badge {
+  display: inline-block; padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px; font-weight: 600;
+}
+.pill {
+  display: inline-block; padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11px; font-weight: 500;
+  background: var(--surface2); color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.pill-active {
+  background: rgba(99,102,241,0.25);
+  color: var(--accent-h);
+  border-color: rgba(99,102,241,0.4);
+}
+.pill-tag { cursor: pointer; transition: all 0.15s; }
+.pill-tag:hover { border-color: var(--border2); color: var(--text); }
+.pill-dt { background: var(--bg); color: var(--text-dim); }
+
+/* Category badge colors */
+.cat-Person      { background: #1e3a5f; color: #60a5fa; }
+.cat-Finance     { background: #1a3324; color: #4ade80; }
+.cat-Credentials { background: #3b1a1a; color: #f87171; }
+.cat-Event       { background: #2d1b4e; color: #c084fc; }
+.cat-Idea        { background: #3b2d0a; color: #fbbf24; }
+.cat-Task        { background: #3b2010; color: #fb923c; }
+.cat-Health      { background: #3b1a2e; color: #f472b6; }
+.cat-Travel      { background: #0a2e3b; color: #22d3ee; }
+.cat-Reference   { background: #1a1a3b; color: #818cf8; }
+.cat-General     { background: #1e1e2e; color: #94a3b8; }
+
+/* ── Store Tab ─────────────────────────────────────────────── */
+.store-wrap { max-width: 680px; margin: 0 auto; }
+.store-wrap h2 { font-size: 18px; margin-bottom: 16px; }
+#storeInput { min-height: 140px; }
+.save-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.save-status { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 13px; }
+
+#saveResult {
+  margin-top: 18px;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.result-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px; }
+.result-title { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.saved-check { color: var(--green); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.result-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.pills-row { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* ── Error Banner ──────────────────────────────────────────── */
+.error-banner {
+  background: var(--red-bg);
+  border: 1px solid rgba(248,113,113,0.3);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--red);
+  font-size: 13px;
+  margin-top: 12px;
+  display: flex; align-items: flex-start; gap: 8px;
+}
+
+/* ── Ask Tab ───────────────────────────────────────────────── */
+.ask-wrap { max-width: 680px; margin: 0 auto; }
+.ask-wrap h2 { font-size: 18px; margin-bottom: 16px; }
+.ask-row { display: flex; gap: 8px; }
+.ask-row input { flex: 1; }
+
+.answer-box {
+  margin-top: 18px;
+  background: rgba(99,102,241,0.08);
+  border: 1px solid rgba(99,102,241,0.25);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.answer-label { font-size: 11px; font-weight: 600; color: var(--accent-h); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+.answer-text { color: var(--text); font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+
+.sources-section { margin-top: 16px; }
+.sources-label { font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.source-card {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); margin-bottom: 6px;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.source-card:hover { border-color: rgba(99,102,241,0.4); }
+.source-info { min-width: 0; }
+.source-title { font-weight: 500; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sim-score { text-align: right; flex-shrink: 0; }
+.sim-num { font-size: 16px; font-weight: 700; }
+.sim-high { color: var(--green); }
+.sim-mid  { color: #fbbf24; }
+.sim-low  { color: var(--text-muted); }
+
+.empty-state { text-align: center; color: var(--text-dim); padding: 32px 0; font-size: 13px; }
+
+/* ── Browse Tab ────────────────────────────────────────────── */
+.filter-bar {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 16px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  margin-bottom: 20px;
+}
+.filter-bar select { width: auto; padding: 6px 10px; font-size: 13px; }
+.sensitive-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text-muted); cursor: pointer; font-size: 13px;
+  transition: all 0.15s;
+}
+.sensitive-toggle:hover { border-color: var(--border2); color: var(--text); }
+.sensitive-toggle.active { border-color: rgba(248,113,113,0.5); color: var(--red); }
+.tag-pills-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.clear-btn {
+  margin-left: auto; background: none; border: none;
+  color: var(--text-dim); cursor: pointer; font-size: 12px;
+  padding: 4px 8px; border-radius: 4px; transition: color 0.15s;
+}
+.clear-btn:hover { color: var(--text-muted); }
+
+/* Memory Grid */
+.memory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.mem-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  transition: border-color 0.15s;
+  position: relative;
+}
+.mem-card:hover { border-color: var(--border2); }
+.mem-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.mem-card-title {
+  font-weight: 600; font-size: 14px; line-height: 1.3;
+  cursor: pointer; color: var(--text);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.mem-card-title:hover { color: var(--accent-h); }
+.mem-card-preview {
+  color: var(--text-muted); font-size: 12px; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: filter 0.3s;
+}
+.blurred { filter: blur(5px); cursor: pointer; user-select: none; }
+.blurred:hover { filter: blur(3px); }
+.mem-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+.mem-card-time { font-size: 11px; color: var(--text-dim); }
+.mem-card-actions { display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s; }
+.mem-card:hover .mem-card-actions { opacity: 1; }
+
+/* Pagination */
+.pagination { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 24px; }
+.pagination button {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text-muted); padding: 7px 16px;
+  border-radius: var(--radius-sm); cursor: pointer; font-size: 13px;
+  transition: all 0.15s;
+}
+.pagination button:hover:not(:disabled) { border-color: var(--border2); color: var(--text); }
+.pagination button:disabled { opacity: 0.35; cursor: not-allowed; }
+.pagination .page-info { color: var(--text-dim); font-size: 13px; }
+
+/* ── Modals ────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  width: 100%; display: flex; flex-direction: column;
+  max-height: 90vh;
+}
+.modal-sm { max-width: 540px; }
+.modal-lg { max-width: 740px; }
+.modal-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px; flex-shrink: 0;
+}
+.modal-header-title { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.modal-close {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-dim); font-size: 20px; line-height: 1;
+  padding: 0 4px; flex-shrink: 0;
+  transition: color 0.15s;
+}
+.modal-close:hover { color: var(--text); }
+.modal-body { overflow-y: auto; padding: 20px 24px; flex: 1; }
+.modal-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 24px; border-top: 1px solid var(--border);
+  gap: 10px; flex-shrink: 0;
+}
+.modal-footer-left { display: flex; gap: 8px; }
+
+/* Detail sections */
+.detail-section { margin-bottom: 18px; }
+.detail-section:last-child { margin-bottom: 0; }
+.section-label { color: var(--text-dim); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.code-block {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  font-size: 13px; color: var(--text-muted); line-height: 1.6;
+  white-space: pre-wrap; word-break: break-word;
+  max-height: 200px; overflow-y: auto;
+}
+.entities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.entity-item {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 12px;
+}
+.entity-key { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.entity-val { font-size: 12px; color: var(--text-muted); word-break: break-all; line-height: 1.4; }
+.meta-row { display: flex; gap: 24px; flex-wrap: wrap; }
+.meta-item { font-size: 12px; color: var(--text-dim); }
+.meta-item span { color: var(--text-muted); }
+
+/* Inlined edit textarea */
+#detailEditArea { min-height: 120px; }
+
+/* ── Upcoming Events Widget ─────────────────────────────── */
+.events-widget {
+  max-width: 680px; margin: 28px auto 0;
+}
+.events-widget-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.events-widget-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.events-list { display: flex; flex-direction: column; gap: 8px; }
+.event-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.event-row:hover { border-color: var(--border2); }
+.event-days {
+  flex-shrink: 0; min-width: 52px; text-align: center;
+  border-radius: var(--radius-sm); padding: 4px 6px;
+  font-size: 11px; font-weight: 700; line-height: 1.2;
+}
+.event-days-num { font-size: 18px; display: block; }
+.days-today  { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+.days-urgent { background: rgba(251,191,36,0.12);  color: #fbbf24;     border: 1px solid rgba(251,191,36,0.3);  }
+.days-soon   { background: rgba(192,132,252,0.12); color: #c084fc;     border: 1px solid rgba(192,132,252,0.3); }
+.days-later  { background: rgba(99,102,241,0.1);   color: var(--accent-h); border: 1px solid rgba(99,102,241,0.25); }
+.event-info  { min-width: 0; flex: 1; }
+.event-title { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.event-date  { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.events-empty { color: var(--text-dim); font-size: 13px; text-align: center; padding: 16px 0; }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    SecondBrain 🧠
+    <span id="ollamaStatus" class="status-dot" title="Server status"></span>
+  </div>
+  <div class="navbar-stats">
+    <span id="statTotal">—</span> memories &bull; <span id="statSensitive" class="red-num">—</span> sensitive
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('store')" id="tab-store">Store</button>
+      <button class="tab-btn"        onclick="switchTab('ask')"   id="tab-ask">Ask</button>
+      <button class="tab-btn"        onclick="switchTab('browse')" id="tab-browse">Browse</button>
+    </div>
+    <button id="logoutBtn" class="btn btn-ghost btn-sm hidden" onclick="logout()" title="Sign out">
+      Sign out
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════ STORE ═══════════════════════ -->
+<div class="view active" id="view-store">
+  <div class="store-wrap">
+    <h2>Store a Memory</h2>
+    <textarea id="storeInput" rows="7"
+      placeholder="Type anything — notes, passwords, account numbers, ideas, contacts, API keys..."></textarea>
+    <div class="save-row">
+      <button class="btn btn-primary" id="saveBtn" onclick="saveMemory()">Save to Memory</button>
+      <div class="save-status hidden" id="saveStatus">
+        <span class="spinner"></span> Analyzing and storing...
+      </div>
+    </div>
+    <div id="saveError" class="hidden"></div>
+
+    <div class="card hidden" id="saveResult">
+      <div class="result-header">
+        <div class="result-title" id="resTitle"></div>
+        <div class="saved-check">✓ Saved!</div>
+      </div>
+      <div class="result-meta">
+        <span id="resCategoryBadge" class="badge"></span>
+        <span id="resSensitiveIcon" class="hidden" title="Sensitive">🔒</span>
+      </div>
+      <div class="pills-row" id="resDataTypes"></div>
+    </div>
+
+    <div class="events-widget" id="eventsWidget">
+      <div class="events-widget-header">
+        <span class="events-widget-title">Upcoming Events</span>
+      </div>
+      <div id="eventsList" class="events-list">
+        <div class="events-empty">Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ ASK ═══════════════════════ -->
+<div class="view hidden" id="view-ask">
+  <div class="ask-wrap">
+    <h2>Ask Your Memory</h2>
+    <div class="ask-row">
+      <input type="text" id="askInput"
+        placeholder="What's my HDFC account number? / Show all API keys..."
+        onkeydown="if(event.key==='Enter') askQuestion()"/>
+      <button class="btn btn-primary" id="askBtn" onclick="askQuestion()">Ask</button>
+    </div>
+
+    <div class="loading-row hidden" id="askLoading">
+      <span class="spinner"></span> Searching memories and generating answer...
+    </div>
+
+    <div class="hidden" id="askResult">
+      <div class="answer-box">
+        <div class="answer-label">Answer</div>
+        <div class="answer-text" id="answerText"></div>
+      </div>
+      <div class="sources-section">
+        <div class="sources-label">Sources</div>
+        <div id="sourcesList"></div>
+      </div>
+    </div>
+
+    <div class="empty-state hidden" id="askEmpty">
+      No relevant memories found. Try storing something first.
+    </div>
+    <div id="askError" class="hidden"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ BROWSE ═══════════════════════ -->
+<div class="view hidden" id="view-browse">
+  <div class="filter-bar">
+    <select id="categoryFilter" onchange="applyFilters()">
+      <option value="">All Categories</option>
+    </select>
+    <button class="sensitive-toggle" id="sensitiveToggle" onclick="toggleSensitive()">
+      🔒 Sensitive only
+    </button>
+    <div class="tag-pills-row" id="tagPills"></div>
+    <button class="clear-btn" onclick="clearFilters()">Clear filters</button>
+  </div>
+
+  <div class="loading-row hidden" id="browseLoading">
+    <span class="spinner"></span> Loading...
+  </div>
+  <div class="empty-state hidden" id="browseEmpty">
+    No memories found. Store something first!
+  </div>
+  <div class="memory-grid" id="memoryGrid"></div>
+
+  <div class="pagination hidden" id="pagination">
+    <button id="prevBtn" onclick="changePage(-1)" disabled>← Prev</button>
+    <span class="page-info" id="pageInfo"></span>
+    <button id="nextBtn" onclick="changePage(1)">Next →</button>
+  </div>
+</div>
+
+</main>
+
+<!-- ═══════════════════════ LOGIN OVERLAY ═══════════════════════ -->
+<div class="login-overlay hidden" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">🧠</div>
+    <div class="login-title">SecondBrain</div>
+    <div class="login-sub">Enter your password to continue</div>
+    <input type="password" id="loginPassword" placeholder="Password"
+      onkeydown="if(event.key==='Enter') submitLogin()"/>
+    <button class="btn btn-primary" id="loginBtn" onclick="submitLogin()">Unlock</button>
+    <div id="loginError" class="login-error hidden"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ SOURCE MODAL ═══════════════════════ -->
+<div class="modal-overlay hidden" id="sourceModal" onclick="if(event.target===this)closeSourceModal()">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-header-title" id="sourceModalTitle"></div>
+      <button class="modal-close" onclick="closeSourceModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="code-block" id="sourceModalText" style="max-height:360px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ DETAIL MODAL ═══════════════════════ -->
+<div class="modal-overlay hidden" id="detailModal" onclick="if(event.target===this)closeDetailModal()">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div>
+        <div class="flex items-center gap2" style="flex-wrap:wrap">
+          <span class="modal-header-title" id="detailTitle"></span>
+          <span id="detailSensIcon" class="hidden">🔒</span>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="detail-section">
+        <div class="section-label">Raw Text</div>
+        <div class="code-block" id="detailRawText"></div>
+        <textarea id="detailEditArea" class="hidden" rows="6"></textarea>
+      </div>
+
+      <div class="detail-section flex gap3 wrap" style="align-items:flex-start">
+        <div>
+          <div class="section-label">Category</div>
+          <span id="detailCategory" class="badge"></span>
+        </div>
+        <div>
+          <div class="section-label">Tags</div>
+          <div id="detailTags" class="pills-row"></div>
+        </div>
+        <div>
+          <div class="section-label">Data Types</div>
+          <div id="detailDataTypes" class="pills-row"></div>
+        </div>
+      </div>
+
+      <div class="detail-section hidden" id="detailEntitiesSection">
+        <div class="section-label">Extracted Entities</div>
+        <div class="entities-grid" id="detailEntities"></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="meta-row">
+          <div class="meta-item">Created: <span id="detailCreated"></span></div>
+          <div class="meta-item">Updated: <span id="detailUpdated"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div class="modal-footer-left">
+        <button class="btn btn-ghost btn-sm" id="editBtn" onclick="startEdit()">Edit</button>
+        <button class="btn btn-primary btn-sm hidden" id="saveEditBtn" onclick="saveEdit()">Save Changes</button>
+        <button class="btn btn-ghost btn-sm hidden" id="cancelEditBtn" onclick="cancelEdit()">Cancel</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeDetailModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ────────────────────────────────────────────────
+   STATE
+──────────────────────────────────────────────── */
+const S = {
+  tab: 'store',
+  filters: { category: '', tag: '', sensitive: false },
+  page: 0,
+  pageSize: 12,
+  currentDetailId: null,
+  token: localStorage.getItem('sb_token') || '',
+};
+
+const ENTITY_LABELS = {
+  names:'Names', amounts:'Amounts', currencies:'Currencies', dates:'Dates',
+  phones:'Phones', emails:'Emails', urls:'URLs',
+  account_numbers:'Account Numbers', card_numbers:'Card Numbers',
+  ifsc_codes:'IFSC Codes', upi_ids:'UPI IDs', pan_numbers:'PAN Numbers',
+  api_keys_or_tokens:'API Keys / Tokens', passwords:'Passwords',
+  addresses:'Addresses', id_numbers:'IDs', other:'Other',
+};
+
+/* ────────────────────────────────────────────────
+   UTILS
+──────────────────────────────────────────────── */
+function h(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function relTime(ds) {
+  if (!ds) return '—';
+  const d = new Date(ds.includes('T') ? ds : ds + 'Z');
+  const s = Math.floor((Date.now() - d) / 1000);
+  if (s < 60)  return 'just now';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  const days = Math.floor(s/86400);
+  if (days < 30) return days + (days===1?' day':' days') + ' ago';
+  const mo = Math.floor(days/30);
+  if (mo < 12) return mo + (mo===1?' month':' months') + ' ago';
+  return Math.floor(mo/12) + 'y ago';
+}
+
+function fmtDate(ds) {
+  if (!ds) return '—';
+  return new Date(ds.includes('T') ? ds : ds + 'Z').toLocaleString();
+}
+
+function catClass(cat) {
+  const known = ['Person','Finance','Credentials','Event','Idea','Task','Health','Travel','Reference','General'];
+  return 'cat-' + (known.includes(cat) ? cat : 'General');
+}
+
+async function api(method, path, body) {
+  const opts = { method, headers: {'Content-Type':'application/json'} };
+  if (S.token) opts.headers['Authorization'] = `Bearer ${S.token}`;
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  if (r.status === 401) {
+    // Token expired or invalid — force re-login
+    _clearToken();
+    showLogin();
+    throw new Error('Session expired. Please log in again.');
+  }
+  if (r.status === 204) return null;
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.detail || `HTTP ${r.status}`);
+  return data;
+}
+
+function showError(containerId, msg) {
+  const el = document.getElementById(containerId);
+  el.className = 'error-banner';
+  el.innerHTML = `<span>⚠</span><span>${h(msg)}</span>`;
+}
+
+/* ────────────────────────────────────────────────
+   TABS
+──────────────────────────────────────────────── */
+function switchTab(tab) {
+  ['store','ask','browse'].forEach(t => {
+    document.getElementById(`view-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`view-${t}`).classList.toggle('hidden', t !== tab);
+    document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+  });
+  S.tab = tab;
+  if (tab === 'browse') loadBrowse();
+}
+
+/* ────────────────────────────────────────────────
+   AUTH
+──────────────────────────────────────────────── */
+function _clearToken() {
+  S.token = '';
+  localStorage.removeItem('sb_token');
+}
+
+function showLogin() {
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginError').classList.add('hidden');
+  document.getElementById('logoutBtn').classList.add('hidden');
+  setTimeout(() => document.getElementById('loginPassword').focus(), 50);
+}
+
+function hideLogin() {
+  document.getElementById('loginOverlay').classList.add('hidden');
+  if (S.token) document.getElementById('logoutBtn').classList.remove('hidden');
+}
+
+async function submitLogin() {
+  const pwd = document.getElementById('loginPassword').value;
+  if (!pwd) return;
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+  btn.disabled = true;
+  btn.textContent = 'Unlocking...';
+  errEl.classList.add('hidden');
+  try {
+    const r = await fetch('/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pwd }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Invalid password');
+    S.token = data.token || '';
+    if (S.token) localStorage.setItem('sb_token', S.token);
+    hideLogin();
+    initApp();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginPassword').focus();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Unlock';
+  }
+}
+
+async function logout() {
+  try { await api('POST', '/auth/logout'); } catch {}
+  _clearToken();
+  showLogin();
+}
+
+/* ────────────────────────────────────────────────
+   INIT
+──────────────────────────────────────────────── */
+async function init() {
+  // Check if auth is required
+  try {
+    const status = await fetch('/auth/status').then(r => r.json());
+    if (status.auth_enabled) {
+      // Validate stored token by hitting a protected endpoint
+      if (S.token) {
+        const check = await fetch('/api/stats', {
+          headers: { 'Authorization': `Bearer ${S.token}` }
+        });
+        if (check.status === 401) {
+          _clearToken();
+          showLogin();
+          return;
+        }
+      } else {
+        showLogin();
+        return;
+      }
+    }
+  } catch {}
+  // Auth not required or token is valid
+  hideLogin();
+  initApp();
+}
+
+async function initApp() {
+  try {
+    await api('GET', '/health');
+    document.getElementById('ollamaStatus').classList.add('green');
+  } catch {
+    document.getElementById('ollamaStatus').classList.add('red');
+  }
+  await refreshStats();
+  loadTagPills();
+  loadUpcomingEvents();
+}
+
+async function refreshStats() {
+  try {
+    const s = await api('GET', '/api/stats');
+    document.getElementById('statTotal').textContent = s.total;
+    document.getElementById('statSensitive').textContent = s.sensitive;
+    // Populate category filter (avoid duplicates)
+    const sel = document.getElementById('categoryFilter');
+    const existing = new Set([...sel.options].map(o => o.value));
+    s.by_category.forEach(({category}) => {
+      if (!existing.has(category)) {
+        const o = document.createElement('option');
+        o.value = category; o.textContent = category;
+        sel.appendChild(o);
+      }
+    });
+  } catch {}
+}
+
+async function loadTagPills() {
+  try {
+    const tags = await api('GET', '/api/tags');
+    const wrap = document.getElementById('tagPills');
+    wrap.innerHTML = '';
+    tags.slice(0, 12).forEach(({tag, count}) => {
+      const btn = document.createElement('button');
+      btn.className = 'pill pill-tag';
+      btn.textContent = `${tag} (${count})`;
+      btn.dataset.tag = tag;
+      btn.onclick = () => toggleTagFilter(tag, btn);
+      wrap.appendChild(btn);
+    });
+  } catch {}
+}
+
+/* ────────────────────────────────────────────────
+   STORE TAB
+──────────────────────────────────────────────── */
+async function saveMemory() {
+  const text = document.getElementById('storeInput').value.trim();
+  if (!text) return;
+
+  const btn = document.getElementById('saveBtn');
+  const status = document.getElementById('saveStatus');
+  const errEl = document.getElementById('saveError');
+  const result = document.getElementById('saveResult');
+
+  btn.disabled = true;
+  status.classList.remove('hidden');
+  result.classList.add('hidden');
+  errEl.className = 'hidden';
+
+  // Timeout warning after 15s
+  const warnTimer = setTimeout(() => {
+    status.innerHTML = '<span class="spinner"></span> Still working — model may be loading...';
+  }, 15000);
+
+  try {
+    const data = await api('POST', '/api/memory', { raw_text: text });
+    clearTimeout(warnTimer);
+
+    document.getElementById('resTitle').textContent = data.title || text.slice(0, 80);
+    document.getElementById('resSensitiveIcon').classList.toggle('hidden', !data.is_sensitive);
+
+    const badge = document.getElementById('resCategoryBadge');
+    badge.textContent = data.category;
+    badge.className = `badge ${catClass(data.category)}`;
+
+    const dtWrap = document.getElementById('resDataTypes');
+    dtWrap.innerHTML = (data.data_types || []).map(dt =>
+      `<span class="pill pill-dt">${h(dt)}</span>`
+    ).join('');
+
+    result.classList.remove('hidden');
+    document.getElementById('storeInput').value = '';
+    refreshStats();
+    loadUpcomingEvents();
+  } catch (e) {
+    clearTimeout(warnTimer);
+    showError('saveError', 'Save failed: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    status.classList.add('hidden');
+    status.innerHTML = '<span class="spinner"></span> Analyzing and storing...';
+  }
+}
+
+/* ────────────────────────────────────────────────
+   ASK TAB
+──────────────────────────────────────────────── */
+async function askQuestion() {
+  const q = document.getElementById('askInput').value.trim();
+  if (!q) return;
+
+  const btn = document.getElementById('askBtn');
+  const loading = document.getElementById('askLoading');
+  const result = document.getElementById('askResult');
+  const empty = document.getElementById('askEmpty');
+  const errEl = document.getElementById('askError');
+
+  btn.disabled = true;
+  loading.classList.remove('hidden');
+  result.classList.add('hidden');
+  empty.classList.add('hidden');
+  errEl.className = 'hidden';
+
+  const warnTimer = setTimeout(() => {
+    loading.innerHTML = '<span class="spinner"></span> Still thinking — model may be loading (first run is slow)...';
+  }, 20000);
+
+  try {
+    const data = await api('POST', '/api/recall', { question: q, top_k: 5, threshold: 0.25 });
+    clearTimeout(warnTimer);
+
+    if (!data.sources || data.sources.length === 0) {
+      empty.classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('answerText').textContent = data.answer;
+
+    const list = document.getElementById('sourcesList');
+    list.innerHTML = '';
+    data.sources.forEach(src => {
+      const simPct = Math.round(src.similarity * 100);
+      const simClass = simPct >= 70 ? 'sim-high' : simPct >= 50 ? 'sim-mid' : 'sim-low';
+      const div = document.createElement('div');
+      div.className = 'source-card';
+      div.innerHTML = `
+        <div class="source-info">
+          <div class="source-title">${src.is_sensitive ? '🔒 ' : ''}${h(src.title || 'Untitled')}</div>
+          <span class="badge ${catClass(src.category)}">${h(src.category)}</span>
+        </div>
+        <div class="sim-score">
+          <div class="sim-num ${simClass}">${simPct}%</div>
+          <div style="font-size:10px;color:var(--text-dim)">match</div>
+        </div>`;
+      div.onclick = () => openSourceModal(src.id, src.title);
+      list.appendChild(div);
+    });
+
+    result.classList.remove('hidden');
+  } catch (e) {
+    clearTimeout(warnTimer);
+    showError('askError', 'Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    loading.classList.add('hidden');
+    loading.innerHTML = '<span class="spinner"></span> Searching memories and generating answer...';
+  }
+}
+
+/* ────────────────────────────────────────────────
+   SOURCE MODAL
+──────────────────────────────────────────────── */
+async function openSourceModal(id, title) {
+  document.getElementById('sourceModalTitle').textContent = title || 'Memory';
+  document.getElementById('sourceModalText').textContent = 'Loading...';
+  document.getElementById('sourceModal').classList.remove('hidden');
+  try {
+    const d = await api('GET', `/api/memory/${id}`);
+    document.getElementById('sourceModalText').textContent = d.raw_text;
+  } catch {
+    document.getElementById('sourceModalText').textContent = 'Failed to load.';
+  }
+}
+function closeSourceModal() {
+  document.getElementById('sourceModal').classList.add('hidden');
+}
+
+/* ────────────────────────────────────────────────
+   BROWSE TAB
+──────────────────────────────────────────────── */
+async function loadBrowse() {
+  const grid = document.getElementById('memoryGrid');
+  const loading = document.getElementById('browseLoading');
+  const empty = document.getElementById('browseEmpty');
+
+  grid.innerHTML = '';
+  empty.classList.add('hidden');
+  loading.classList.remove('hidden');
+
+  const p = new URLSearchParams({ limit: S.pageSize, offset: S.page * S.pageSize });
+  if (S.filters.category) p.set('category', S.filters.category);
+  if (S.filters.tag) p.set('tag', S.filters.tag);
+  if (S.filters.sensitive) p.set('sensitive', 'true');
+
+  try {
+    const data = await api('GET', `/api/memory?${p}`);
+    loading.classList.add('hidden');
+
+    if (!data.items.length) {
+      empty.classList.remove('hidden');
+      document.getElementById('pagination').classList.add('hidden');
+      return;
+    }
+
+    data.items.forEach(m => grid.appendChild(makeCard(m)));
+
+    const total = data.total;
+    const pages = Math.ceil(total / S.pageSize);
+    const pag = document.getElementById('pagination');
+    if (pages > 1) {
+      pag.classList.remove('hidden');
+      document.getElementById('pageInfo').textContent = `Page ${S.page + 1} of ${pages}`;
+      document.getElementById('prevBtn').disabled = S.page === 0;
+      document.getElementById('nextBtn').disabled = S.page >= pages - 1;
+    } else {
+      pag.classList.add('hidden');
+    }
+  } catch (e) {
+    loading.classList.add('hidden');
+    grid.innerHTML = `<div class="error-banner"><span>⚠</span><span>${h(e.message)}</span></div>`;
+  }
+}
+
+const revealTimers = {};
+function makeCard(m) {
+  const card = document.createElement('div');
+  card.className = 'mem-card';
+  const rawId = `raw-${m.id}`;
+  const blurClass = m.is_sensitive ? 'blurred' : '';
+  const tags = (m.tags || []).slice(0, 4).map(t => `<span class="pill">${h(t)}</span>`).join('');
+
+  card.innerHTML = `
+    <div class="mem-card-header">
+      <div class="mem-card-title" onclick="openDetailModal('${m.id}')">${h(m.title || 'Untitled')}</div>
+      ${m.is_sensitive ? '<span title="Sensitive">🔒</span>' : ''}
+    </div>
+    <span class="badge ${catClass(m.category)}">${h(m.category)}</span>
+    <div id="${rawId}" class="mem-card-preview ${blurClass}"
+      ${m.is_sensitive ? `onclick="revealCard('${rawId}')" title="Click to reveal"` : ''}
+    >${h(m.raw_text || '')}</div>
+    ${tags ? `<div class="pills-row">${tags}</div>` : ''}
+    <div class="mem-card-footer">
+      <span class="mem-card-time">${relTime(m.created_at)}</span>
+      <div class="mem-card-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openDetailModal('${m.id}')">View</button>
+        <button class="btn btn-danger" onclick="deleteMemory(event,'${m.id}')">Delete</button>
+      </div>
+    </div>`;
+  return card;
+}
+
+function revealCard(rawId) {
+  const el = document.getElementById(rawId);
+  if (!el) return;
+  el.classList.remove('blurred');
+  el.onclick = null;
+  el.title = '';
+  clearTimeout(revealTimers[rawId]);
+  revealTimers[rawId] = setTimeout(() => {
+    el.classList.add('blurred');
+    el.onclick = () => revealCard(rawId);
+    el.title = 'Click to reveal';
+  }, 10000);
+}
+
+/* ────────────────────────────────────────────────
+   FILTERS
+──────────────────────────────────────────────── */
+function applyFilters() {
+  S.filters.category = document.getElementById('categoryFilter').value;
+  S.page = 0;
+  loadBrowse();
+}
+
+function toggleSensitive() {
+  S.filters.sensitive = !S.filters.sensitive;
+  document.getElementById('sensitiveToggle').classList.toggle('active', S.filters.sensitive);
+  S.page = 0;
+  loadBrowse();
+}
+
+function toggleTagFilter(tag, btn) {
+  if (S.filters.tag === tag) {
+    S.filters.tag = '';
+    btn.classList.remove('pill-active');
+  } else {
+    document.querySelectorAll('#tagPills .pill-tag').forEach(b => b.classList.remove('pill-active'));
+    S.filters.tag = tag;
+    btn.classList.add('pill-active');
+  }
+  S.page = 0;
+  loadBrowse();
+}
+
+function clearFilters() {
+  S.filters = { category: '', tag: '', sensitive: false };
+  document.getElementById('categoryFilter').value = '';
+  document.getElementById('sensitiveToggle').classList.remove('active');
+  document.querySelectorAll('#tagPills .pill-tag').forEach(b => b.classList.remove('pill-active'));
+  S.page = 0;
+  loadBrowse();
+}
+
+function changePage(dir) {
+  S.page = Math.max(0, S.page + dir);
+  loadBrowse();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ────────────────────────────────────────────────
+   DELETE
+──────────────────────────────────────────────── */
+async function deleteMemory(e, id) {
+  e.stopPropagation();
+  if (!confirm('Delete this memory? This cannot be undone.')) return;
+  try {
+    await api('DELETE', `/api/memory/${id}`);
+    loadBrowse();
+    refreshStats();
+  } catch (err) {
+    alert('Delete failed: ' + err.message);
+  }
+}
+
+/* ────────────────────────────────────────────────
+   DETAIL MODAL
+──────────────────────────────────────────────── */
+async function openDetailModal(id) {
+  S.currentDetailId = id;
+  cancelEdit();
+  document.getElementById('detailModal').classList.remove('hidden');
+
+  // Clear previous content
+  document.getElementById('detailTitle').textContent = 'Loading...';
+  document.getElementById('detailRawText').textContent = '';
+  document.getElementById('detailEntitiesSection').classList.add('hidden');
+
+  try {
+    const m = await api('GET', `/api/memory/${id}`);
+
+    document.getElementById('detailTitle').textContent = m.title || 'Untitled';
+    document.getElementById('detailSensIcon').classList.toggle('hidden', !m.is_sensitive);
+    document.getElementById('detailRawText').textContent = m.raw_text;
+    document.getElementById('detailEditArea').value = m.raw_text;
+
+    const catEl = document.getElementById('detailCategory');
+    catEl.textContent = m.category;
+    catEl.className = `badge ${catClass(m.category)}`;
+
+    document.getElementById('detailTags').innerHTML =
+      (m.tags || []).map(t => `<span class="pill">${h(t)}</span>`).join('') || '<span class="dim small">none</span>';
+
+    document.getElementById('detailDataTypes').innerHTML =
+      (m.data_types || []).map(dt => `<span class="pill pill-dt">${h(dt)}</span>`).join('') || '<span class="dim small">none</span>';
+
+    document.getElementById('detailCreated').textContent = fmtDate(m.created_at);
+    document.getElementById('detailUpdated').textContent = m.updated_at ? fmtDate(m.updated_at) : '—';
+
+    // Entities
+    const ents = m.extracted_entities || {};
+    const entEl = document.getElementById('detailEntities');
+    entEl.innerHTML = '';
+    let hasEnts = false;
+    Object.entries(ENTITY_LABELS).forEach(([key, label]) => {
+      const val = ents[key];
+      if (!val) return;
+      const empty = Array.isArray(val) ? val.length === 0 : (typeof val === 'object' ? Object.keys(val).length === 0 : !val);
+      if (empty) return;
+      hasEnts = true;
+      const display = Array.isArray(val) ? val.join(', ') : (typeof val === 'object' ? JSON.stringify(val) : String(val));
+      const div = document.createElement('div');
+      div.className = 'entity-item';
+      div.innerHTML = `<div class="entity-key">${h(label)}</div><div class="entity-val">${h(display)}</div>`;
+      entEl.appendChild(div);
+    });
+    document.getElementById('detailEntitiesSection').classList.toggle('hidden', !hasEnts);
+  } catch (e) {
+    document.getElementById('detailRawText').textContent = 'Failed to load: ' + e.message;
+  }
+}
+
+function closeDetailModal() {
+  document.getElementById('detailModal').classList.add('hidden');
+  S.currentDetailId = null;
+}
+
+function startEdit() {
+  document.getElementById('detailRawText').classList.add('hidden');
+  document.getElementById('detailEditArea').classList.remove('hidden');
+  document.getElementById('editBtn').classList.add('hidden');
+  document.getElementById('saveEditBtn').classList.remove('hidden');
+  document.getElementById('cancelEditBtn').classList.remove('hidden');
+}
+
+function cancelEdit() {
+  document.getElementById('detailRawText').classList.remove('hidden');
+  document.getElementById('detailEditArea').classList.add('hidden');
+  document.getElementById('editBtn').classList.remove('hidden');
+  document.getElementById('saveEditBtn').classList.add('hidden');
+  document.getElementById('cancelEditBtn').classList.add('hidden');
+}
+
+async function saveEdit() {
+  const text = document.getElementById('detailEditArea').value.trim();
+  if (!text || !S.currentDetailId) return;
+
+  const btn = document.getElementById('saveEditBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+  try {
+    await api('PUT', `/api/memory/${S.currentDetailId}`, { raw_text: text });
+    await openDetailModal(S.currentDetailId);
+    cancelEdit();
+    if (S.tab === 'browse') loadBrowse();
+  } catch (e) {
+    alert('Save failed: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save Changes';
+  }
+}
+
+/* ────────────────────────────────────────────────
+   UPCOMING EVENTS WIDGET
+──────────────────────────────────────────────── */
+async function loadUpcomingEvents() {
+  const list = document.getElementById('eventsList');
+  try {
+    const data = await api('GET', '/api/events/upcoming?limit=5');
+    const events = data.events || [];
+
+    if (!events.length) {
+      list.innerHTML = '<div class="events-empty">No upcoming events. Store a memory with a future date!</div>';
+      return;
+    }
+
+    list.innerHTML = events.map(ev => {
+      const d = ev.days_left;
+      let daysClass, daysLabel;
+      if (d === 0)      { daysClass = 'days-today';  daysLabel = 'Today'; }
+      else if (d <= 2)  { daysClass = 'days-urgent'; daysLabel = d + 'd'; }
+      else if (d <= 7)  { daysClass = 'days-soon';   daysLabel = d + 'd'; }
+      else              { daysClass = 'days-later';   daysLabel = d + 'd'; }
+
+      const numHtml = d === 0
+        ? `<span class="event-days-num">!</span>`
+        : `<span class="event-days-num">${d}</span>`;
+
+      return `
+        <div class="event-row" onclick="openDetailModal('${h(ev.id)}')">
+          <div class="event-days ${daysClass}">
+            ${numHtml}
+            <span>${h(daysLabel)}</span>
+          </div>
+          <div class="event-info">
+            <div class="event-title">${ev.is_sensitive ? '🔒 ' : ''}${h(ev.title)}</div>
+            <div class="event-date">${h(ev.date_str)}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch {
+    list.innerHTML = '<div class="events-empty">Could not load events.</div>';
+  }
+}
+
+/* ────────────────────────────────────────────────
+   KEYBOARD
+──────────────────────────────────────────────── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeDetailModal();
+    closeSourceModal();
+  }
+});
+
+/* ────────────────────────────────────────────────
+   BOOT
+──────────────────────────────────────────────── */
+init();  // checks auth first, then calls initApp()
+</script>
+</body>
+</html>

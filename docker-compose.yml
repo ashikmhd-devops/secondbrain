@@ -1,0 +1,12 @@
+services:
+  secondbrain:
+    build: .
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./secondbrain.db:/app/secondbrain.db
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - PORT=8765
+      - APP_PASSWORD=${APP_PASSWORD:-}
+    restart: unless-stopped
