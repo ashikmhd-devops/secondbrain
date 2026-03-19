@@ -27,8 +27,20 @@ def init_db() -> None:
                 created_at          TEXT DEFAULT (datetime('now')),
                 updated_at          TEXT,
                 last_accessed_at    TEXT,
-                access_count        INTEGER DEFAULT 0
+                access_count        INTEGER DEFAULT 0,
+                expires_at          TEXT,
+                is_archived         INTEGER DEFAULT 0,
+                rendered_text       TEXT
             );
+
+            CREATE TABLE IF NOT EXISTS memory_history (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                memory_id   TEXT NOT NULL,
+                raw_text    TEXT NOT NULL,
+                title       TEXT,
+                saved_at    TEXT DEFAULT (datetime('now'))
+            );
+            CREATE INDEX IF NOT EXISTS idx_history_memory_id ON memory_history(memory_id, saved_at DESC);
 
             CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts USING fts5(
                 id UNINDEXED, raw_text, title, tags,
@@ -53,6 +65,9 @@ def init_db() -> None:
             "ALTER TABLE memory ADD COLUMN is_pinned INTEGER DEFAULT 0",
             "ALTER TABLE memory ADD COLUMN last_accessed_at TEXT",
             "ALTER TABLE memory ADD COLUMN access_count INTEGER DEFAULT 0",
+            "ALTER TABLE memory ADD COLUMN expires_at TEXT",
+            "ALTER TABLE memory ADD COLUMN is_archived INTEGER DEFAULT 0",
+            "ALTER TABLE memory ADD COLUMN rendered_text TEXT",
         ]:
             try:
                 conn.execute(migration)

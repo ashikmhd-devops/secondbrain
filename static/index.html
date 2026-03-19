@@ -854,6 +854,142 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
 }
 .mem-card:hover .mem-card-actions { opacity: 1; }
 
+/* ── Bulk-select toolbar ── */
+.bulk-toolbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 0;
+}
+.bulk-count { font-size: 13px; color: var(--muted); }
+.mem-card-checkbox {
+  position: absolute; top: 10px; left: 10px;
+  width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);
+  display: none;
+}
+.select-mode .mem-card { position: relative; padding-left: 38px; }
+.select-mode .mem-card-checkbox { display: block; }
+.mem-card.selected { border-color: var(--primary); background: rgba(197,198,255,0.06); }
+
+/* ── Export/Import buttons ── */
+.filter-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+/* ── Markdown rendered view ── */
+.md-rendered {
+  padding: 12px 16px; border-radius: var(--r-md);
+  background: var(--surf-low); line-height: 1.7; font-size: 14px;
+}
+.md-rendered h1,.md-rendered h2,.md-rendered h3 {
+  color: var(--on-surf); margin: 12px 0 6px; font-weight: 600;
+}
+.md-rendered h1 { font-size: 18px; }
+.md-rendered h2 { font-size: 16px; }
+.md-rendered h3 { font-size: 15px; }
+.md-rendered p  { margin: 6px 0; }
+.md-rendered ul,.md-rendered ol { padding-left: 20px; margin: 6px 0; }
+.md-rendered li { margin: 3px 0; }
+.md-rendered code {
+  background: var(--surf-high); border-radius: 4px;
+  padding: 1px 5px; font-size: 12px; font-family: monospace;
+}
+.md-rendered pre {
+  background: var(--surf-high); border-radius: var(--r-sm);
+  padding: 12px; overflow-x: auto; margin: 8px 0;
+}
+.md-rendered pre code { background: none; padding: 0; }
+.md-rendered table {
+  border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 13px;
+}
+.md-rendered th,.md-rendered td {
+  border: 1px solid var(--outline-var); padding: 6px 10px; text-align: left;
+}
+.md-rendered th { background: var(--surf-high); font-weight: 600; }
+.md-rendered blockquote {
+  border-left: 3px solid var(--primary); margin: 8px 0;
+  padding: 4px 12px; color: var(--muted); background: var(--surf-low);
+}
+.md-rendered a { color: var(--primary); }
+.view-toggle {
+  display: flex; gap: 4px; margin-top: 8px;
+}
+.view-toggle button {
+  background: var(--surf-low); border: 1px solid var(--outline-var);
+  color: var(--muted); border-radius: var(--r-full);
+  padding: 3px 12px; font-size: 12px; cursor: pointer;
+}
+.view-toggle button.active { background: rgba(197,198,255,0.12); border-color: var(--primary); color: var(--primary); }
+
+/* ── History panel ── */
+.history-list { display: flex; flex-direction: column; gap: 8px; }
+.history-item {
+  background: var(--surf-low); border: 1px solid var(--outline-var);
+  border-radius: var(--r-md); padding: 10px 14px;
+}
+.history-meta {
+  font-size: 11px; color: var(--muted); margin-bottom: 6px;
+  display: flex; align-items: center; gap: 10px;
+}
+.history-preview {
+  font-size: 13px; color: var(--on-surf-var);
+  white-space: pre-wrap; max-height: 80px; overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+}
+.history-restore {
+  background: none; border: 1px solid var(--outline-var);
+  color: var(--muted); border-radius: var(--r-full);
+  padding: 2px 10px; font-size: 11px; cursor: pointer; margin-top: 6px;
+}
+.history-restore:hover { border-color: var(--primary); color: var(--primary); }
+
+/* Expiry badges */
+.expiry-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.3px;
+  padding: 2px 8px; border-radius: var(--r-full);
+  border: 1px solid currentColor;
+}
+.expiry-badge.expiry-soon {
+  color: #FFB74D; border-color: rgba(255,183,77,0.4);
+  background: rgba(255,183,77,0.08);
+}
+.expiry-badge.expiry-expired {
+  color: var(--error); border-color: rgba(207,102,121,0.4);
+  background: rgba(207,102,121,0.08);
+}
+.expiry-badge.expiry-ok {
+  color: var(--muted); border-color: rgba(255,255,255,0.1);
+}
+.mem-card.archived {
+  opacity: 0.5;
+  border-style: dashed;
+}
+
+/* Expiry picker row (store tab) */
+.expiry-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 12px;
+}
+.expiry-row-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.expiry-preset {
+  background: var(--surf-low); border: 1px solid var(--outline-var);
+  color: var(--on-surf); border-radius: var(--r-full);
+  padding: 4px 12px; font-size: 12px; cursor: pointer;
+  transition: background var(--dur-short) var(--ease-std),
+              border-color var(--dur-short) var(--ease-std);
+}
+.expiry-preset:hover { background: var(--state-hover); border-color: var(--primary); }
+.expiry-preset.active { background: rgba(197,198,255,0.12); border-color: var(--primary); color: var(--primary); }
+.expiry-custom-wrap { display: flex; align-items: center; gap: 6px; }
+.expiry-custom-input {
+  background: var(--surf-low); border: 1px solid var(--outline-var);
+  color: var(--on-surf); border-radius: var(--r-sm);
+  padding: 4px 8px; font-size: 12px;
+  color-scheme: dark;
+}
+.expiry-clear {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 12px; padding: 2px 4px;
+}
+.expiry-clear:hover { color: var(--error); }
+
 /* Pinned state */
 .mem-card.pinned {
   border-color: rgba(197,198,255,0.25);
@@ -1102,6 +1238,20 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
       </div>
     </div>
 
+    <div class="expiry-row" id="expiryRow">
+      <span class="expiry-row-label">⏳ Expires:</span>
+      <button class="expiry-preset" data-mins="0" onclick="setExpiryPreset(this,0)">None</button>
+      <button class="expiry-preset" data-mins="30" onclick="setExpiryPreset(this,30)">30 min</button>
+      <button class="expiry-preset" data-mins="60" onclick="setExpiryPreset(this,60)">1 h</button>
+      <button class="expiry-preset" data-mins="1440" onclick="setExpiryPreset(this,1440)">24 h</button>
+      <button class="expiry-preset" data-mins="10080" onclick="setExpiryPreset(this,10080)">7 d</button>
+      <div class="expiry-custom-wrap">
+        <input type="datetime-local" id="expiryCustom" class="expiry-custom-input"
+          oninput="setExpiryCustom()" title="Custom expiry date/time"/>
+        <button class="expiry-clear hidden" id="expiryClear" onclick="clearExpiry()" title="Remove expiry">✕</button>
+      </div>
+    </div>
+
     <div id="dupWarning" class="hidden"></div>
 
     <div class="save-actions">
@@ -1197,9 +1347,29 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
     <button class="sensitive-chip" id="sensitiveToggle" onclick="toggleSensitive()">
       🔒 Sensitive only
     </button>
+    <button class="sensitive-chip" id="archivedToggle" onclick="toggleArchived()">
+      📦 Archived
+    </button>
     <div class="filter-divider"></div>
     <div class="tags-row" id="tagPills"></div>
     <button class="clear-link" onclick="clearFilters()">Clear all</button>
+    <div class="filter-actions">
+      <button class="btn btn-text btn-sm" onclick="toggleSelectMode()" id="selectModeBtn">☑ Select</button>
+      <button class="btn btn-text btn-sm" onclick="exportMemories('json')" title="Export as JSON">⬇ JSON</button>
+      <button class="btn btn-text btn-sm" onclick="exportMemories('markdown')" title="Export as Markdown">⬇ MD</button>
+      <label class="btn btn-text btn-sm" style="cursor:pointer" title="Import JSON backup">
+        ⬆ Import
+        <input type="file" id="importFileInput" style="display:none" accept=".json" onchange="importMemories(this)"/>
+      </label>
+    </div>
+  </div>
+
+  <!-- Bulk-select action bar (hidden until select mode) -->
+  <div class="bulk-toolbar hidden" id="bulkToolbar">
+    <span class="bulk-count" id="bulkCount">0 selected</span>
+    <button class="btn btn-outlined btn-sm" onclick="selectAllVisible()">Select all</button>
+    <button class="btn btn-danger-text btn-sm" id="bulkDeleteBtn" onclick="bulkDelete()" disabled>Delete selected</button>
+    <button class="btn btn-text btn-sm" onclick="toggleSelectMode()">Cancel</button>
   </div>
 
   <div class="loading-row hidden" id="browseLoading">
@@ -1250,8 +1420,15 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
     <div class="dialog-body">
 
       <div class="detail-section">
-        <div class="detail-label">Content</div>
-        <div class="code-surface" id="detailRawText"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div class="detail-label" style="margin-bottom:0">Content</div>
+          <div class="view-toggle" id="contentViewToggle">
+            <button class="active" id="viewRawBtn" onclick="switchContentView('raw')">Raw</button>
+            <button id="viewRenderedBtn" onclick="switchContentView('rendered')">Rendered</button>
+          </div>
+        </div>
+        <div class="code-surface" id="detailRawText" style="margin-top:8px"></div>
+        <div class="md-rendered hidden" id="detailRenderedText" style="margin-top:8px"></div>
         <textarea id="detailEditArea" class="hidden" rows="6"
           style="margin-top:8px"></textarea>
       </div>
@@ -1276,6 +1453,11 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
         <div class="entities-grid" id="detailEntities"></div>
       </div>
 
+      <div class="detail-section hidden" id="detailExpirySection">
+        <div class="detail-label">Expiry</div>
+        <div id="detailExpiryBadge"></div>
+      </div>
+
       <div class="detail-section">
         <div class="meta-grid">
           <div class="meta-item">Created <span id="detailCreated"></span></div>
@@ -1285,14 +1467,23 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
         </div>
       </div>
 
+      <div class="detail-section" id="detailHistorySection">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="detail-label" style="margin-bottom:0">Version History</div>
+          <button class="btn btn-text btn-sm" id="historyToggleBtn" onclick="toggleHistory()">Show</button>
+        </div>
+        <div class="history-list hidden" id="historyList"></div>
+      </div>
+
     </div>
 
     <div class="dialog-footer">
       <div class="dialog-footer-start">
         <button class="btn-pin" id="detailPinBtn" onclick="togglePinFromDetail()">📌</button>
-        <button class="btn btn-tonal btn-sm"    id="editBtn"       onclick="startEdit()">Edit</button>
+        <button class="btn btn-tonal btn-sm"    id="editBtn"         onclick="startEdit()">Edit</button>
         <button class="btn btn-filled btn-sm hidden" id="saveEditBtn"   onclick="saveEdit()">Save Changes</button>
         <button class="btn btn-text btn-sm hidden"   id="cancelEditBtn" onclick="cancelEdit()">Cancel</button>
+        <button class="btn btn-text btn-sm" id="detailArchiveBtn" onclick="toggleArchiveFromDetail()">📦 Archive</button>
       </div>
       <button class="btn btn-text btn-sm" onclick="closeDetailModal()">Close</button>
     </div>
@@ -1305,11 +1496,15 @@ main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
 ──────────────────────────────────────────────── */
 const S = {
   tab: 'store',
-  filters: { category: '', tag: '', sensitive: false },
+  filters: { category: '', tag: '', sensitive: false, archived: false },
   sort: 'recent',
   page: 0,
   pageSize: 12,
   currentDetailId: null,
+  expiresAt: null,   // ISO string or null
+  selectMode: false,
+  selectedIds: new Set(),
+  contentView: 'raw',   // 'raw' | 'rendered'
   token: localStorage.getItem('sb_token') || '',
 };
 
@@ -1538,7 +1733,9 @@ async function saveMemory(force = false) {
   }, 15000);
 
   try {
-    const data = await api('POST', '/api/memory', { raw_text: text });
+    const payload = { raw_text: text };
+    if (S.expiresAt) payload.expires_at = S.expiresAt;
+    const data = await api('POST', '/api/memory', payload);
     clearTimeout(warnTimer);
 
     document.getElementById('resTitle').textContent = data.title || text.slice(0, 80);
@@ -1555,6 +1752,7 @@ async function saveMemory(force = false) {
 
     result.classList.remove('hidden');
     document.getElementById('storeInput').value = '';
+    clearExpiry();
     refreshStats();
     loadUpcomingEvents();
   } catch (e) {
@@ -1654,6 +1852,7 @@ async function loadBrowse() {
   const empty   = document.getElementById('browseEmpty');
 
   grid.innerHTML = '';
+  grid.classList.toggle('select-mode', S.selectMode);
   empty.classList.add('hidden');
   loading.classList.remove('hidden');
 
@@ -1661,6 +1860,7 @@ async function loadBrowse() {
   if (S.filters.category) p.set('category', S.filters.category);
   if (S.filters.tag)      p.set('tag', S.filters.tag);
   if (S.filters.sensitive) p.set('sensitive', 'true');
+  if (S.filters.archived)  p.set('archived', 'true');
   if (S.sort && S.sort !== 'recent') p.set('sort', S.sort);
 
   try {
@@ -1694,20 +1894,29 @@ async function loadBrowse() {
 const revealTimers = {};
 function makeCard(m) {
   const card    = document.createElement('div');
-  card.className = 'mem-card' + (m.is_pinned ? ' pinned' : '');
+  card.className = 'mem-card' + (m.is_pinned ? ' pinned' : '') + (m.is_archived ? ' archived' : '')
+                 + (S.selectedIds.has(m.id) ? ' selected' : '');
   card.id = `card-${m.id}`;
+  card.dataset.id = m.id;
   const rawId   = `raw-${m.id}`;
   const blurCls = m.is_sensitive ? 'blurred' : '';
   const tags    = (m.tags || []).slice(0, 4).map(t => `<span class="tag-chip">${h(t)}</span>`).join('');
+  const expBadge = expiryBadge(m.expires_at, m.is_archived);
 
   card.innerHTML = `
+    <input type="checkbox" class="mem-card-checkbox" id="chk-${m.id}"
+      ${S.selectedIds.has(m.id) ? 'checked' : ''}
+      onchange="toggleCardSelect('${m.id}', this.checked)" onclick="event.stopPropagation()"/>
     <div class="mem-card-header">
       <div class="mem-card-title" onclick="openDetailModal('${m.id}')">
         ${m.is_pinned ? '<span class="pin-indicator" title="Pinned">📌</span> ' : ''}${h(m.title || 'Untitled')}
       </div>
       ${m.is_sensitive ? '<span title="Sensitive">🔒</span>' : ''}
     </div>
-    <span class="badge ${catClass(m.category)}">${h(m.category)}</span>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <span class="badge ${catClass(m.category)}">${h(m.category)}</span>
+      ${expBadge}
+    </div>
     <div id="${rawId}" class="mem-card-preview ${blurCls}"
       ${m.is_sensitive ? `onclick="revealCard('${rawId}')" title="Click to reveal"` : ''}
     >${h(m.raw_text || '')}</div>
@@ -1750,6 +1959,7 @@ function applySort() {
 function toggleSensitive() {
   S.filters.sensitive = !S.filters.sensitive;
   document.getElementById('sensitiveToggle').classList.toggle('active', S.filters.sensitive);
+
   S.page = 0; loadBrowse();
 }
 function toggleTagFilter(tag, btn) {
@@ -1763,12 +1973,18 @@ function toggleTagFilter(tag, btn) {
   }
   S.page = 0; loadBrowse();
 }
+function toggleArchived() {
+  S.filters.archived = !S.filters.archived;
+  document.getElementById('archivedToggle').classList.toggle('active', S.filters.archived);
+  S.page = 0; loadBrowse();
+}
 function clearFilters() {
-  S.filters = { category: '', tag: '', sensitive: false };
+  S.filters = { category: '', tag: '', sensitive: false, archived: false };
   S.sort = 'recent';
   document.getElementById('categoryFilter').value = '';
   document.getElementById('sortSelect').value = 'recent';
   document.getElementById('sensitiveToggle').classList.remove('active');
+  document.getElementById('archivedToggle').classList.remove('active');
   document.querySelectorAll('#tagPills .tag-chip').forEach(b => b.classList.remove('active'));
   S.page = 0; loadBrowse();
 }
@@ -1776,6 +1992,132 @@ function changePage(dir) {
   S.page = Math.max(0, S.page + dir);
   loadBrowse();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ────────────────────────────────────────────────
+   BULK SELECT
+──────────────────────────────────────────────── */
+function toggleSelectMode() {
+  S.selectMode = !S.selectMode;
+  S.selectedIds.clear();
+  document.getElementById('selectModeBtn').classList.toggle('active', S.selectMode);
+  document.getElementById('bulkToolbar').classList.toggle('hidden', !S.selectMode);
+  _updateBulkBar();
+  loadBrowse();
+}
+function toggleCardSelect(id, checked) {
+  if (checked) S.selectedIds.add(id);
+  else S.selectedIds.delete(id);
+  const card = document.getElementById(`card-${id}`);
+  if (card) card.classList.toggle('selected', checked);
+  _updateBulkBar();
+}
+function selectAllVisible() {
+  document.querySelectorAll('#memoryGrid .mem-card').forEach(card => {
+    const id = card.dataset.id;
+    if (!id) return;
+    S.selectedIds.add(id);
+    card.classList.add('selected');
+    const chk = document.getElementById(`chk-${id}`);
+    if (chk) chk.checked = true;
+  });
+  _updateBulkBar();
+}
+function _updateBulkBar() {
+  const n = S.selectedIds.size;
+  document.getElementById('bulkCount').textContent = `${n} selected`;
+  document.getElementById('bulkDeleteBtn').disabled = n === 0;
+  document.getElementById('bulkDeleteBtn').textContent = n > 0 ? `Delete ${n}` : 'Delete selected';
+}
+async function bulkDelete() {
+  const ids = [...S.selectedIds];
+  if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} memor${ids.length === 1 ? 'y' : 'ies'}? This cannot be undone.`)) return;
+  try {
+    const data = await api('DELETE', '/api/memory', { ids });
+    S.selectedIds.clear();
+    loadBrowse();
+    refreshStats();
+    _updateBulkBar();
+  } catch (e) { alert('Bulk delete failed: ' + e.message); }
+}
+
+/* ────────────────────────────────────────────────
+   EXPORT / IMPORT
+──────────────────────────────────────────────── */
+function exportMemories(format) {
+  const token = S.token ? `?_token=${encodeURIComponent(S.token)}` : '';
+  // Use a hidden link to trigger download; auth header via fetch not needed for downloads
+  fetch(`/api/export?format=${format}`, {
+    headers: S.token ? { Authorization: `Bearer ${S.token}` } : {},
+  }).then(r => {
+    if (!r.ok) throw new Error('Export failed');
+    return r.blob();
+  }).then(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `secondbrain_export.${format === 'markdown' ? 'md' : 'json'}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }).catch(e => alert('Export failed: ' + e.message));
+}
+async function importMemories(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  let data;
+  try { data = JSON.parse(await file.text()); }
+  catch { alert('Invalid JSON file.'); return; }
+  const memories = Array.isArray(data) ? data : data.memories;
+  if (!Array.isArray(memories)) { alert('Expected {"memories":[...]} or an array.'); return; }
+  if (!confirm(`Import ${memories.length} memor${memories.length === 1 ? 'y' : 'ies'}?`)) return;
+  try {
+    const result = await api('POST', '/api/import', { memories });
+    alert(`Imported ${result.imported}${result.failed ? ` (${result.failed} failed)` : ''}.`);
+    loadBrowse(); refreshStats();
+  } catch (e) { alert('Import failed: ' + e.message); }
+}
+
+/* ────────────────────────────────────────────────
+   EXPIRY
+──────────────────────────────────────────────── */
+function setExpiryPreset(btn, mins) {
+  document.querySelectorAll('.expiry-preset').forEach(b => b.classList.remove('active'));
+  if (mins === 0) { clearExpiry(); return; }
+  btn.classList.add('active');
+  const dt = new Date(Date.now() + mins * 60 * 1000);
+  S.expiresAt = dt.toISOString().slice(0, 16) + ':00';
+  const input = document.getElementById('expiryCustom');
+  input.value = dt.toISOString().slice(0, 16);
+  document.getElementById('expiryClear').classList.remove('hidden');
+}
+function setExpiryCustom() {
+  const val = document.getElementById('expiryCustom').value;
+  document.querySelectorAll('.expiry-preset').forEach(b => b.classList.remove('active'));
+  if (!val) { S.expiresAt = null; document.getElementById('expiryClear').classList.add('hidden'); return; }
+  S.expiresAt = val + ':00';
+  document.getElementById('expiryClear').classList.remove('hidden');
+}
+function clearExpiry() {
+  S.expiresAt = null;
+  document.getElementById('expiryCustom').value = '';
+  document.getElementById('expiryClear').classList.add('hidden');
+  document.querySelectorAll('.expiry-preset').forEach(b => b.classList.remove('active'));
+}
+
+/** Returns an expiry badge HTML string given an ISO datetime string. */
+function expiryBadge(expiresAt, isArchived) {
+  if (isArchived) return '<span class="expiry-badge expiry-expired">📦 Archived</span>';
+  if (!expiresAt) return '';
+  const ms = new Date(expiresAt.includes('T') ? expiresAt : expiresAt + 'Z') - Date.now();
+  if (ms <= 0) return '<span class="expiry-badge expiry-expired">⌛ Expired</span>';
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60)  return `<span class="expiry-badge expiry-soon">⏳ ${mins}m left</span>`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24)   return `<span class="expiry-badge expiry-soon">⏳ ${hrs}h left</span>`;
+  const days = Math.floor(hrs / 24);
+  return `<span class="expiry-badge expiry-ok">⏳ ${days}d left</span>`;
 }
 
 /* ────────────────────────────────────────────────
@@ -1817,6 +2159,75 @@ async function togglePinFromDetail() {
   } catch (err) { alert('Pin failed: ' + err.message); }
 }
 
+async function toggleArchiveFromDetail() {
+  if (!S.currentDetailId) return;
+  try {
+    const data = await api('POST', `/api/memory/${S.currentDetailId}/archive`);
+    const btn = document.getElementById('detailArchiveBtn');
+    btn.textContent = data.is_archived ? '📤 Unarchive' : '📦 Archive';
+    if (S.tab === 'browse') loadBrowse();
+  } catch (err) { alert('Archive failed: ' + err.message); }
+}
+
+/* ────────────────────────────────────────────────
+   CONTENT VIEW TOGGLE (Raw / Rendered)
+──────────────────────────────────────────────── */
+function switchContentView(view) {
+  S.contentView = view;
+  document.getElementById('detailRawText').classList.toggle('hidden', view !== 'raw');
+  document.getElementById('detailRenderedText').classList.toggle('hidden', view !== 'rendered');
+  document.getElementById('viewRawBtn').classList.toggle('active', view === 'raw');
+  document.getElementById('viewRenderedBtn').classList.toggle('active', view === 'rendered');
+}
+
+/* ────────────────────────────────────────────────
+   VERSION HISTORY
+──────────────────────────────────────────────── */
+async function toggleHistory() {
+  const list = document.getElementById('historyList');
+  const btn  = document.getElementById('historyToggleBtn');
+  if (!list.classList.contains('hidden')) {
+    list.classList.add('hidden');
+    btn.textContent = 'Show';
+    return;
+  }
+  btn.textContent = 'Loading…';
+  try {
+    const data = await api('GET', `/api/memory/${S.currentDetailId}/history`);
+    list.innerHTML = '';
+    if (!data.history.length) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:13px">No previous versions.</div>';
+    } else {
+      data.history.forEach(v => {
+        const el = document.createElement('div');
+        el.className = 'history-item';
+        el.innerHTML = `
+          <div class="history-meta">
+            <span>${fmtDate(v.saved_at)}</span>
+            ${v.title ? `<span>${h(v.title)}</span>` : ''}
+          </div>
+          <div class="history-preview">${h(v.raw_text)}</div>
+          <button class="history-restore" onclick="restoreVersion(${v.id}, ${JSON.stringify(v.raw_text)})">↩ Restore</button>`;
+        list.appendChild(el);
+      });
+    }
+    list.classList.remove('hidden');
+    btn.textContent = 'Hide';
+  } catch (e) {
+    btn.textContent = 'Show';
+    alert('Failed to load history: ' + e.message);
+  }
+}
+
+async function restoreVersion(historyId, rawText) {
+  if (!confirm('Restore this version? The current content will be saved to history.')) return;
+  try {
+    await api('PUT', `/api/memory/${S.currentDetailId}`, { raw_text: rawText });
+    closeDetailModal();
+    if (S.tab === 'browse') loadBrowse();
+  } catch (e) { alert('Restore failed: ' + e.message); }
+}
+
 /* ────────────────────────────────────────────────
    DELETE
 ──────────────────────────────────────────────── */
@@ -1835,9 +2246,15 @@ async function deleteMemory(e, id) {
 async function openDetailModal(id) {
   S.currentDetailId = id;
   cancelEdit();
+  // Reset view state
+  switchContentView('raw');
+  document.getElementById('historyList').classList.add('hidden');
+  document.getElementById('historyToggleBtn').textContent = 'Show';
+
   document.getElementById('detailModal').classList.remove('hidden');
   document.getElementById('detailTitle').textContent = 'Loading…';
   document.getElementById('detailRawText').textContent = '';
+  document.getElementById('detailRenderedText').innerHTML = '';
   document.getElementById('detailEntitiesSection').classList.add('hidden');
 
   try {
@@ -1846,6 +2263,14 @@ async function openDetailModal(id) {
     document.getElementById('detailSensIcon').classList.toggle('hidden', !m.is_sensitive);
     document.getElementById('detailRawText').textContent = m.raw_text;
     document.getElementById('detailEditArea').value = m.raw_text;
+
+    // Rendered markdown — trust server-rendered HTML (no JS in output)
+    if (m.rendered_text) {
+      document.getElementById('detailRenderedText').innerHTML = m.rendered_text;
+      document.getElementById('viewRenderedBtn').classList.remove('hidden');
+    } else {
+      document.getElementById('viewRenderedBtn').classList.add('hidden');
+    }
 
     const catEl = document.getElementById('detailCategory');
     catEl.textContent = m.category;
@@ -1863,6 +2288,22 @@ async function openDetailModal(id) {
     document.getElementById('detailUpdated').textContent = m.updated_at ? fmtDate(m.updated_at) : '—';
     document.getElementById('detailLastAccessed').textContent = m.last_accessed_at ? fmtDate(m.last_accessed_at) : '—';
     document.getElementById('detailAccessCount').textContent = (m.access_count || 0).toLocaleString();
+
+    // Expiry section
+    const expirySection = document.getElementById('detailExpirySection');
+    const expiryBadgeEl = document.getElementById('detailExpiryBadge');
+    if (m.expires_at || m.is_archived) {
+      expirySection.classList.remove('hidden');
+      const badge = expiryBadge(m.expires_at, m.is_archived);
+      const expiresStr = m.expires_at ? ` — ${fmtDate(m.expires_at)}` : '';
+      expiryBadgeEl.innerHTML = badge + `<span style="color:var(--muted);font-size:12px;margin-left:8px">${m.expires_at ? expiresStr : ''}</span>`;
+    } else {
+      expirySection.classList.add('hidden');
+    }
+
+    // Archive button
+    const archBtn = document.getElementById('detailArchiveBtn');
+    archBtn.textContent = m.is_archived ? '📤 Unarchive' : '📦 Archive';
 
     const pinBtn = document.getElementById('detailPinBtn');
     pinBtn.classList.toggle('pinned', !!m.is_pinned);

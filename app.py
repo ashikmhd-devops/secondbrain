@@ -1,3 +1,4 @@
+import asyncio
 import json
 import re
 import uuid
@@ -6,6 +7,8 @@ from contextlib import asynccontextmanager
 from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
+
+import markdown as md_lib
 
 import httpx
 import numpy as np
@@ -45,6 +48,11 @@ def _row_to_dict(row) -> dict:
     return dict(row)
 
 
+def _render_md(text: str) -> str:
+    """Render markdown to HTML (safe subset — no raw HTML pass-through)."""
+    return md_lib.markdown(text, extensions=["nl2br", "tables", "fenced_code"])
+
+
 def _fts_query(text: str) -> str | None:
     """Convert free text to a safe FTS5 OR query over individual words."""
     words = re.findall(r'\b\w{2,}\b', text)
@@ -74,10 +82,12 @@ def require_auth(authorization: str = Header(default="")) -> None:
 
 class MemoryCreate(BaseModel):
     raw_text: str
+    expires_at: Optional[str] = None  # ISO datetime string, e.g. "2026-03-20T10:00:00"
 
 
 class MemoryUpdate(BaseModel):
     raw_text: str
+    expires_at: Optional[str] = None
 
 
 class RecallRequest(BaseModel):
@@ -95,14 +105,42 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class BulkDeleteRequest(BaseModel):
+    ids: list[str]
+
+
+class ImportRequest(BaseModel):
+    memories: list[dict]
+
+
 # ---------------------------------------------------------------------------
 # App & routers
 # ---------------------------------------------------------------------------
 
+async def _auto_archive_loop():
+    """Background task: archive expired memories every 60 seconds."""
+    while True:
+        try:
+            with get_conn() as conn:
+                conn.execute(
+                    """
+                    UPDATE memory SET is_archived = 1
+                    WHERE expires_at IS NOT NULL
+                      AND expires_at <= datetime('now')
+                      AND is_archived = 0
+                    """
+                )
+        except Exception:
+            pass
+        await asyncio.sleep(60)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    task = asyncio.create_task(_auto_archive_loop())
     yield
+    task.cancel()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -204,18 +242,21 @@ async def create_memory(body: MemoryCreate):
     title = enriched.get("title", body.raw_text[:80])
     category = enriched.get("category", "General")
 
+    rendered = _render_md(body.raw_text)
+
     with get_conn() as conn:
         conn.execute(
             """
             INSERT INTO memory
-                (id, raw_text, title, category, tags, data_types,
-                 extracted_entities, is_sensitive, embedding)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, raw_text, rendered_text, title, category, tags, data_types,
+                 extracted_entities, is_sensitive, embedding, expires_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                mem_id, body.raw_text, title, category,
+                mem_id, body.raw_text, rendered, title, category,
                 tags, data_types, extracted_entities,
                 is_sensitive, _emb_to_blob(embedding),
+                body.expires_at,
             ),
         )
 
@@ -226,6 +267,7 @@ async def create_memory(body: MemoryCreate):
         "tags": enriched.get("tags", []),
         "data_types": enriched.get("data_types", []),
         "is_sensitive": bool(is_sensitive),
+        "expires_at": body.expires_at,
     }
 
 
@@ -267,6 +309,7 @@ def list_memories(
     category: Optional[str] = None,
     tag: Optional[str] = None,
     sensitive: Optional[bool] = None,
+    archived: Optional[bool] = None,
     sort: Optional[str] = Query(default=None, pattern="^(recent|accessed|popular)$"),
     limit: int = Query(default=50, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
@@ -283,6 +326,11 @@ def list_memories(
     if tag:
         clauses.append("EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)")
         params.append(tag)
+    # By default hide archived; pass archived=true to show only archived
+    if archived is True:
+        clauses.append("is_archived = 1")
+    else:
+        clauses.append("is_archived = 0")
 
     where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
 
@@ -302,7 +350,7 @@ def list_memories(
             f"""
             SELECT id, raw_text, title, category, tags, data_types,
                    is_sensitive, is_pinned, created_at, updated_at,
-                   last_accessed_at, access_count
+                   last_accessed_at, access_count, expires_at, is_archived
             FROM memory {where}
             ORDER BY {order}
             LIMIT ? OFFSET ?
@@ -317,6 +365,7 @@ def list_memories(
         d["data_types"] = json.loads(d["data_types"] or "[]")
         d["is_sensitive"] = bool(d["is_sensitive"])
         d["is_pinned"] = bool(d["is_pinned"])
+        d["is_archived"] = bool(d["is_archived"])
         d["access_count"] = d.get("access_count") or 0
         items.append(d)
 
@@ -332,9 +381,9 @@ def get_memory(mem_id: str):
     with get_conn() as conn:
         row = conn.execute(
             """
-            SELECT id, raw_text, title, category, tags, data_types,
+            SELECT id, raw_text, rendered_text, title, category, tags, data_types,
                    extracted_entities, is_sensitive, is_pinned, created_at, updated_at,
-                   last_accessed_at, access_count
+                   last_accessed_at, access_count, expires_at, is_archived
             FROM memory WHERE id = ?
             """,
             (mem_id,),
@@ -359,8 +408,28 @@ def get_memory(mem_id: str):
     d["extracted_entities"] = json.loads(d["extracted_entities"] or "{}")
     d["is_sensitive"] = bool(d["is_sensitive"])
     d["is_pinned"] = bool(d["is_pinned"])
+    d["is_archived"] = bool(d["is_archived"])
     d["access_count"] = d.get("access_count") or 0
     return d
+
+
+# ---------------------------------------------------------------------------
+# POST /api/memory/{id}/archive  — toggle archive
+# ---------------------------------------------------------------------------
+
+@api.post("/memory/{mem_id}/archive")
+def toggle_archive(mem_id: str):
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT is_archived FROM memory WHERE id = ?", (mem_id,)
+        ).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Memory not found")
+        new_val = 0 if row["is_archived"] else 1
+        conn.execute(
+            "UPDATE memory SET is_archived = ? WHERE id = ?", (new_val, mem_id)
+        )
+    return {"is_archived": bool(new_val)}
 
 
 # ---------------------------------------------------------------------------
@@ -370,15 +439,16 @@ def get_memory(mem_id: str):
 @api.put("/memory/{mem_id}")
 async def update_memory(mem_id: str, body: MemoryUpdate):
     with get_conn() as conn:
-        exists = conn.execute(
-            "SELECT 1 FROM memory WHERE id = ?", (mem_id,)
+        old = conn.execute(
+            "SELECT raw_text, title FROM memory WHERE id = ?", (mem_id,)
         ).fetchone()
 
-    if not exists:
+    if not old:
         raise HTTPException(status_code=404, detail="Memory not found")
 
     enriched = await enrich_memory(body.raw_text)
     embedding = await get_embedding(body.raw_text)
+    rendered = _render_md(body.raw_text)
 
     tags = json.dumps(enriched.get("tags", []))
     data_types = json.dumps(enriched.get("data_types", []))
@@ -388,18 +458,24 @@ async def update_memory(mem_id: str, body: MemoryUpdate):
     category = enriched.get("category", "General")
 
     with get_conn() as conn:
+        # Snapshot the previous version before overwriting
+        conn.execute(
+            "INSERT INTO memory_history (memory_id, raw_text, title) VALUES (?, ?, ?)",
+            (mem_id, old["raw_text"], old["title"]),
+        )
         conn.execute(
             """
             UPDATE memory SET
-                raw_text = ?, title = ?, category = ?, tags = ?,
+                raw_text = ?, rendered_text = ?, title = ?, category = ?, tags = ?,
                 data_types = ?, extracted_entities = ?, is_sensitive = ?,
-                embedding = ?, updated_at = datetime('now')
+                embedding = ?, updated_at = datetime('now'),
+                expires_at = ?, is_archived = 0
             WHERE id = ?
             """,
             (
-                body.raw_text, title, category, tags,
+                body.raw_text, rendered, title, category, tags,
                 data_types, extracted_entities, is_sensitive,
-                _emb_to_blob(embedding), mem_id,
+                _emb_to_blob(embedding), body.expires_at, mem_id,
             ),
         )
 
@@ -438,7 +514,7 @@ async def recall(body: RecallRequest):
     # --- Semantic scores ---
     with get_conn() as conn:
         rows = conn.execute(
-            "SELECT id, title, category, is_sensitive, is_pinned, embedding FROM memory WHERE embedding IS NOT NULL"
+            "SELECT id, title, category, is_sensitive, is_pinned, embedding FROM memory WHERE embedding IS NOT NULL AND is_archived = 0"
         ).fetchall()
 
     row_map: dict = {}
@@ -459,7 +535,7 @@ async def recall(body: RecallRequest):
                     SELECT m.id, memory_fts.rank
                     FROM memory_fts
                     JOIN memory m ON m.id = memory_fts.id
-                    WHERE memory_fts MATCH ?
+                    WHERE memory_fts MATCH ? AND m.is_archived = 0
                     ORDER BY memory_fts.rank
                     LIMIT 50
                     """,
@@ -810,6 +886,166 @@ async def upload_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=422, detail="No text could be extracted from this file.")
 
     return {"text": text, "filename": filename, "chars": len(text)}
+
+
+# ---------------------------------------------------------------------------
+# DELETE /api/memory  — bulk delete
+# ---------------------------------------------------------------------------
+
+@api.delete("/memory", status_code=200)
+def bulk_delete(body: BulkDeleteRequest):
+    if not body.ids:
+        return {"deleted": 0}
+    ph = ",".join("?" * len(body.ids))
+    with get_conn() as conn:
+        result = conn.execute(f"DELETE FROM memory WHERE id IN ({ph})", body.ids)
+    return {"deleted": result.rowcount}
+
+
+# ---------------------------------------------------------------------------
+# GET /api/memory/{id}/history
+# ---------------------------------------------------------------------------
+
+@api.get("/memory/{mem_id}/history")
+def get_history(mem_id: str):
+    with get_conn() as conn:
+        exists = conn.execute("SELECT 1 FROM memory WHERE id = ?", (mem_id,)).fetchone()
+        if not exists:
+            raise HTTPException(status_code=404, detail="Memory not found")
+        rows = conn.execute(
+            """
+            SELECT id, raw_text, title, saved_at
+            FROM memory_history WHERE memory_id = ?
+            ORDER BY saved_at DESC
+            LIMIT 20
+            """,
+            (mem_id,),
+        ).fetchall()
+    return {"history": [_row_to_dict(r) for r in rows]}
+
+
+# ---------------------------------------------------------------------------
+# GET /api/export
+# ---------------------------------------------------------------------------
+
+@api.get("/export")
+def export_memories(format: str = Query(default="json", pattern="^(json|markdown)$")):
+    from fastapi.responses import Response
+
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, raw_text, title, category, tags, data_types,
+                   extracted_entities, is_sensitive, is_pinned,
+                   expires_at, is_archived, access_count,
+                   created_at, updated_at
+            FROM memory
+            ORDER BY created_at ASC
+            """
+        ).fetchall()
+
+    memories = []
+    for row in rows:
+        d = _row_to_dict(row)
+        d["tags"] = json.loads(d["tags"] or "[]")
+        d["data_types"] = json.loads(d["data_types"] or "[]")
+        d["extracted_entities"] = json.loads(d["extracted_entities"] or "{}")
+        d["is_sensitive"] = bool(d["is_sensitive"])
+        d["is_pinned"] = bool(d["is_pinned"])
+        d["is_archived"] = bool(d["is_archived"])
+        memories.append(d)
+
+    if format == "markdown":
+        lines = ["# SecondBrain Export\n"]
+        for m in memories:
+            lines.append(f"## {m['title'] or 'Untitled'}")
+            lines.append(f"**Category:** {m['category']}  ")
+            if m["tags"]:
+                lines.append(f"**Tags:** {', '.join(m['tags'])}  ")
+            lines.append(f"**Created:** {m['created_at']}  ")
+            if m["expires_at"]:
+                lines.append(f"**Expires:** {m['expires_at']}  ")
+            lines.append("")
+            lines.append(m["raw_text"])
+            lines.append("\n---\n")
+        content = "\n".join(lines)
+        return Response(
+            content=content,
+            media_type="text/markdown",
+            headers={"Content-Disposition": "attachment; filename=secondbrain_export.md"},
+        )
+
+    content = json.dumps({"memories": memories}, indent=2, ensure_ascii=False)
+    return Response(
+        content=content,
+        media_type="application/json",
+        headers={"Content-Disposition": "attachment; filename=secondbrain_export.json"},
+    )
+
+
+# ---------------------------------------------------------------------------
+# POST /api/import
+# ---------------------------------------------------------------------------
+
+@api.post("/import")
+async def import_memories(body: ImportRequest):
+    imported = 0
+    failed = 0
+
+    for item in body.memories[:500]:  # hard cap
+        try:
+            raw_text = str(item.get("raw_text", "")).strip()
+            if not raw_text:
+                failed += 1
+                continue
+
+            mem_id = str(uuid.uuid4())
+            title = item.get("title") or raw_text[:80]
+            category = item.get("category") or "General"
+            tags = json.dumps(item.get("tags") or [])
+            data_types = json.dumps(item.get("data_types") or [])
+            extracted_entities = json.dumps(item.get("extracted_entities") or {})
+            is_sensitive = int(bool(item.get("is_sensitive", False)))
+            is_pinned = int(bool(item.get("is_pinned", False)))
+            expires_at = item.get("expires_at")
+            created_at = item.get("created_at")
+            rendered = _render_md(raw_text)
+
+            embedding = await get_embedding(raw_text)
+
+            with get_conn() as conn:
+                if created_at:
+                    conn.execute(
+                        """
+                        INSERT INTO memory
+                            (id, raw_text, rendered_text, title, category, tags, data_types,
+                             extracted_entities, is_sensitive, is_pinned, embedding,
+                             expires_at, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (mem_id, raw_text, rendered, title, category,
+                         tags, data_types, extracted_entities,
+                         is_sensitive, is_pinned, _emb_to_blob(embedding),
+                         expires_at, created_at),
+                    )
+                else:
+                    conn.execute(
+                        """
+                        INSERT INTO memory
+                            (id, raw_text, rendered_text, title, category, tags, data_types,
+                             extracted_entities, is_sensitive, is_pinned, embedding, expires_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (mem_id, raw_text, rendered, title, category,
+                         tags, data_types, extracted_entities,
+                         is_sensitive, is_pinned, _emb_to_blob(embedding),
+                         expires_at),
+                    )
+            imported += 1
+        except Exception:
+            failed += 1
+
+    return {"imported": imported, "failed": failed}
 
 
 # ---------------------------------------------------------------------------
