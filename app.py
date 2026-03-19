@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from auth import AUTH_ENABLED, login, revoke_token, verify_token
+from auth import AUTH_ENABLED, _init_token_table, login, revoke_token, verify_token
 from database import get_conn, init_db
 from enricher import enrich_memory
 from ollama import OLLAMA_HOST, get_embedding, ollama_chat
@@ -138,6 +138,7 @@ async def _auto_archive_loop():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    _init_token_table()
     task = asyncio.create_task(_auto_archive_loop())
     yield
     task.cancel()
@@ -148,7 +149,7 @@ app = FastAPI(lifespan=lifespan)
 
 @app.exception_handler(Exception)
 async def _unhandled(request: Request, exc: Exception) -> JSONResponse:
-    return JSONResponse(status_code=500, content={"detail": str(exc)})
+    return JSONResponse(status_code=500, content={"detail": "An internal error occurred."})
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -658,19 +659,26 @@ def toggle_pin(mem_id: str):
 
 @api.post("/search")
 def search(body: SearchRequest):
-    with get_conn() as conn:
-        rows = conn.execute(
-            """
-            SELECT m.id, m.raw_text, m.title, m.category, m.tags,
-                   m.data_types, m.is_sensitive, m.created_at, m.updated_at
-            FROM memory_fts f
-            JOIN memory m ON m.id = f.id
-            WHERE memory_fts MATCH ?
-            ORDER BY rank
-            LIMIT ?
-            """,
-            (body.query, body.limit),
-        ).fetchall()
+    fts_q = _fts_query(body.query)
+    if not fts_q:
+        return {"items": []}
+
+    try:
+        with get_conn() as conn:
+            rows = conn.execute(
+                """
+                SELECT m.id, m.raw_text, m.title, m.category, m.tags,
+                       m.data_types, m.is_sensitive, m.created_at, m.updated_at
+                FROM memory_fts
+                JOIN memory m ON m.id = memory_fts.id
+                WHERE memory_fts MATCH ? AND m.is_archived = 0
+                ORDER BY rank
+                LIMIT ?
+                """,
+                (fts_q, body.limit),
+            ).fetchall()
+    except Exception:
+        return {"items": []}
 
     items = []
     for row in rows:
@@ -987,65 +995,61 @@ def export_memories(format: str = Query(default="json", pattern="^(json|markdown
 # POST /api/import
 # ---------------------------------------------------------------------------
 
+_IMPORT_CONCURRENCY = 5   # max simultaneous embedding calls
+_IMPORT_ITEM_TIMEOUT = 30  # seconds per embedding call
+
+
+async def _import_one(item: dict, sem: asyncio.Semaphore) -> bool:
+    """Embed and insert a single import item. Returns True on success."""
+    try:
+        raw_text = str(item.get("raw_text", "")).strip()
+        if not raw_text:
+            return False
+
+        mem_id = str(uuid.uuid4())
+        title = item.get("title") or raw_text[:80]
+        category = item.get("category") or "General"
+        tags = json.dumps(item.get("tags") or [])
+        data_types = json.dumps(item.get("data_types") or [])
+        extracted_entities = json.dumps(item.get("extracted_entities") or {})
+        is_sensitive = int(bool(item.get("is_sensitive", False)))
+        is_pinned = int(bool(item.get("is_pinned", False)))
+        expires_at = item.get("expires_at")
+        created_at = item.get("created_at")
+        rendered = _render_md(raw_text)
+
+        async with sem:
+            embedding = await asyncio.wait_for(
+                get_embedding(raw_text), timeout=_IMPORT_ITEM_TIMEOUT
+            )
+
+        cols = "(id, raw_text, rendered_text, title, category, tags, data_types, extracted_entities, is_sensitive, is_pinned, embedding, expires_at"
+        vals = "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+        params: list = [mem_id, raw_text, rendered, title, category,
+                        tags, data_types, extracted_entities,
+                        is_sensitive, is_pinned, _emb_to_blob(embedding), expires_at]
+        if created_at:
+            cols += ", created_at)"
+            vals += ", ?)"
+            params.append(created_at)
+        else:
+            cols += ")"
+            vals += ")"
+
+        with get_conn() as conn:
+            conn.execute(f"INSERT INTO memory {cols} {vals}", params)
+        return True
+    except Exception:
+        return False
+
+
 @api.post("/import")
 async def import_memories(body: ImportRequest):
-    imported = 0
-    failed = 0
-
-    for item in body.memories[:500]:  # hard cap
-        try:
-            raw_text = str(item.get("raw_text", "")).strip()
-            if not raw_text:
-                failed += 1
-                continue
-
-            mem_id = str(uuid.uuid4())
-            title = item.get("title") or raw_text[:80]
-            category = item.get("category") or "General"
-            tags = json.dumps(item.get("tags") or [])
-            data_types = json.dumps(item.get("data_types") or [])
-            extracted_entities = json.dumps(item.get("extracted_entities") or {})
-            is_sensitive = int(bool(item.get("is_sensitive", False)))
-            is_pinned = int(bool(item.get("is_pinned", False)))
-            expires_at = item.get("expires_at")
-            created_at = item.get("created_at")
-            rendered = _render_md(raw_text)
-
-            embedding = await get_embedding(raw_text)
-
-            with get_conn() as conn:
-                if created_at:
-                    conn.execute(
-                        """
-                        INSERT INTO memory
-                            (id, raw_text, rendered_text, title, category, tags, data_types,
-                             extracted_entities, is_sensitive, is_pinned, embedding,
-                             expires_at, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """,
-                        (mem_id, raw_text, rendered, title, category,
-                         tags, data_types, extracted_entities,
-                         is_sensitive, is_pinned, _emb_to_blob(embedding),
-                         expires_at, created_at),
-                    )
-                else:
-                    conn.execute(
-                        """
-                        INSERT INTO memory
-                            (id, raw_text, rendered_text, title, category, tags, data_types,
-                             extracted_entities, is_sensitive, is_pinned, embedding, expires_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """,
-                        (mem_id, raw_text, rendered, title, category,
-                         tags, data_types, extracted_entities,
-                         is_sensitive, is_pinned, _emb_to_blob(embedding),
-                         expires_at),
-                    )
-            imported += 1
-        except Exception:
-            failed += 1
-
-    return {"imported": imported, "failed": failed}
+    items = body.memories[:500]  # hard cap
+    sem = asyncio.Semaphore(_IMPORT_CONCURRENCY)
+    results = await asyncio.gather(*(_import_one(item, sem) for item in items))
+    imported = sum(1 for r in results if r)
+    return {"imported": imported, "failed": len(results) - imported}
 
 
 # ---------------------------------------------------------------------------
