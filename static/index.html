@@ -3,684 +3,1175 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>SecondBrain 🧠</title>
+<title>SecondBrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-/* ── Reset & Variables ─────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+/* ─────────────────────────────────────────────────────────────────
+   M3 DESIGN TOKENS  (dark, indigo-primary palette)
+───────────────────────────────────────────────────────────────── */
 :root {
-  --bg:          #0f1117;
-  --surface:     #1a1d27;
-  --surface2:    #222536;
-  --border:      #2a2d3a;
-  --border2:     #363a50;
-  --accent:      #6366f1;
-  --accent-h:    #818cf8;
-  --text:        #e2e8f0;
-  --text-muted:  #94a3b8;
-  --text-dim:    #64748b;
-  --red:         #f87171;
-  --red-bg:      #3b1a1a;
-  --green:       #4ade80;
-  --green-bg:    #1a3324;
-  --radius:      12px;
-  --radius-sm:   8px;
-  --radius-pill: 9999px;
+  /* surface ramp */
+  --bg:           #0C0C16;
+  --surface-dim:  #0C0C16;
+  --surface:      #121220;
+  --surf-low:     #17172A;
+  --surf:         #1C1C30;
+  --surf-high:    #222238;
+  --surf-highest: #292942;
+
+  /* primary */
+  --primary:       #C5C6FF;
+  --on-primary:    #1B1D99;
+  --primary-cont:  #3032BC;
+  --on-primary-c:  #E2E2FF;
+
+  /* secondary */
+  --secondary:     #C3C4DD;
+  --on-secondary:  #2C2D40;
+  --secondary-cont:#434457;
+  --on-secondary-c:#DFE0F8;
+
+  /* tertiary */
+  --tertiary:      #EDB8D3;
+  --on-tertiary:   #48263A;
+  --tertiary-cont: #623D51;
+  --on-tertiary-c: #FFD8EE;
+
+  /* semantic */
+  --error:         #FFB4AB;
+  --error-cont:    #93000A;
+  --on-error-c:    #FFDAD6;
+
+  --green:         #72DC88;
+  --green-cont:    #003910;
+  --amber:         #F9C74F;
+  --amber-cont:    #3F2A00;
+
+  /* text */
+  --on-bg:       #E5E4F0;
+  --on-surface:  #E5E4F0;
+  --on-surf-var: #C7C5D6;
+  --muted:       #908FA3;
+
+  /* utility */
+  --outline:     #908FA3;
+  --outline-var: #46475A;
+  --scrim:       rgba(0,0,0,0.72);
+  --state-hover: rgba(197,198,255,0.08);
+  --state-press: rgba(197,198,255,0.12);
+
+  /* shape */
+  --r-xs:   4px;
+  --r-sm:   8px;
+  --r-md:   12px;
+  --r-lg:   16px;
+  --r-xl:   24px;
+  --r-2xl:  28px;
+  --r-full: 9999px;
+
+  /* motion */
+  --ease-std:  cubic-bezier(0.2, 0, 0, 1);
+  --ease-dcel: cubic-bezier(0, 0, 0, 1);
+  --ease-acel: cubic-bezier(0.3, 0, 1, 1);
+  --dur-short: 150ms;
+  --dur-med:   250ms;
+  --dur-long:  350ms;
+
+  /* elevation tints (primary overlay) */
+  --elev1: rgba(197,198,255,0.05);
+  --elev2: rgba(197,198,255,0.08);
+  --elev3: rgba(197,198,255,0.11);
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   RESET
+───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 html { scroll-behavior: smooth; }
+
 body {
   background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--on-surface);
+  font-family: Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 14px;
   line-height: 1.5;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ── Utilities ─────────────────────────────────────────────── */
-.hidden { display: none !important; }
-.flex   { display: flex; }
-.grid   { display: grid; }
-.wrap   { flex-wrap: wrap; }
-.gap1   { gap: 4px; }
-.gap2   { gap: 8px; }
-.gap3   { gap: 12px; }
-.items-center { align-items: center; }
-.items-start  { align-items: flex-start; }
+/* ─────────────────────────────────────────────────────────────────
+   SCROLLBAR
+───────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--outline-var); border-radius: var(--r-full); }
+
+/* ─────────────────────────────────────────────────────────────────
+   UTILITIES
+───────────────────────────────────────────────────────────────── */
+.hidden   { display: none !important; }
+.flex     { display: flex; }
+.grid     { display: grid; }
+.gap1     { gap: 4px; }
+.gap2     { gap: 8px; }
+.gap3     { gap: 12px; }
+.gap4     { gap: 16px; }
+.wrap     { flex-wrap: wrap; }
+.items-center    { align-items: center; }
+.items-start     { align-items: flex-start; }
 .justify-between { justify-content: space-between; }
-.grow { flex: 1; }
+.grow     { flex: 1; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.break-all { word-break: break-all; }
 .pre-wrap { white-space: pre-wrap; }
-.bold { font-weight: 600; }
-.small { font-size: 12px; }
-.muted { color: var(--text-muted); }
-.dim   { color: var(--text-dim); }
-.red   { color: var(--red); }
-.green { color: var(--green); }
-.accent { color: var(--accent-h); }
-.uppercase { text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; font-weight: 600; }
+.break-all { word-break: break-all; }
 
-/* ── Login overlay ─────────────────────────────────────────── */
-.login-overlay {
-  position: fixed; inset: 0; z-index: 200;
-  background: var(--bg);
-  display: flex; align-items: center; justify-content: center;
-  padding: 24px;
-}
-.login-box {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 20px; padding: 40px 36px;
-  width: 100%; max-width: 380px;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.6);
-  text-align: center;
-}
-.login-logo { font-size: 40px; margin-bottom: 8px; }
-.login-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-.login-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 28px; }
-.login-box input[type=password] {
-  text-align: center; font-size: 15px; letter-spacing: 0.1em;
-  margin-bottom: 12px;
-}
-.login-box .btn { width: 100%; justify-content: center; padding: 10px; font-size: 14px; }
-.login-error {
-  background: var(--red-bg); border: 1px solid rgba(248,113,113,0.3);
-  border-radius: var(--radius-sm); padding: 8px 12px;
-  color: var(--red); font-size: 13px; margin-top: 10px;
-}
+/* M3 Type Scale */
+.type-headline-sm  { font-size: 24px; font-weight: 400; line-height: 32px; letter-spacing: 0; }
+.type-title-lg     { font-size: 22px; font-weight: 500; line-height: 28px; letter-spacing: 0; }
+.type-title-md     { font-size: 16px; font-weight: 500; line-height: 24px; letter-spacing: 0.15px; }
+.type-title-sm     { font-size: 14px; font-weight: 500; line-height: 20px; letter-spacing: 0.1px; }
+.type-body-lg      { font-size: 16px; font-weight: 400; line-height: 24px; letter-spacing: 0.5px; }
+.type-body-md      { font-size: 14px; font-weight: 400; line-height: 20px; letter-spacing: 0.25px; }
+.type-body-sm      { font-size: 12px; font-weight: 400; line-height: 16px; letter-spacing: 0.4px; }
+.type-label-lg     { font-size: 14px; font-weight: 500; line-height: 20px; letter-spacing: 0.1px; }
+.type-label-md     { font-size: 12px; font-weight: 500; line-height: 16px; letter-spacing: 0.5px; }
+.type-label-sm     { font-size: 11px; font-weight: 500; line-height: 16px; letter-spacing: 0.5px; }
 
-/* ── Scrollbar ─────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: var(--surface); }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+.on-surface-var { color: var(--on-surf-var); }
+.on-primary-c   { color: var(--on-primary-c); }
+.col-primary    { color: var(--primary); }
+.col-error      { color: var(--error); }
+.col-green      { color: var(--green); }
+.col-amber      { color: var(--amber); }
 
-/* ── Navbar ────────────────────────────────────────────────── */
-.navbar {
+/* ─────────────────────────────────────────────────────────────────
+   TOP APP BAR  (M3 + Fluent acrylic)
+───────────────────────────────────────────────────────────────── */
+.app-bar {
   position: sticky; top: 0; z-index: 40;
-  background: rgba(15,17,23,0.92);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 20px;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 10px;
+  background: rgba(12, 12, 22, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(70, 71, 90, 0.5);
+  padding: 0 24px;
+  height: 64px;
+  display: flex; align-items: center; gap: 16px;
 }
-.navbar-brand {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 18px; font-weight: 700; color: var(--text);
+
+.app-bar-brand {
+  display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
+}
+.app-bar-logo {
+  width: 36px; height: 36px; border-radius: var(--r-md);
+  background: linear-gradient(135deg, var(--primary-cont) 0%, #1C1C40 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.app-bar-title {
+  font-size: 20px; font-weight: 600; letter-spacing: -0.3px;
+  color: var(--on-surface);
 }
 .status-dot {
-  width: 9px; height: 9px; border-radius: 50%;
-  background: #64748b; flex-shrink: 0;
-  transition: background 0.3s;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--outline);
+  transition: background var(--dur-med) var(--ease-std);
+  flex-shrink: 0;
 }
-.status-dot.green { background: #22c55e; }
-.status-dot.red   { background: #ef4444; }
-.navbar-stats { color: var(--text-muted); font-size: 13px; }
-.navbar-stats span { color: var(--text); font-weight: 600; }
-.navbar-stats .red-num { color: var(--red); }
+.status-dot.green  { background: var(--green); box-shadow: 0 0 8px rgba(114,220,136,0.5); }
+.status-dot.red    { background: var(--error); }
 
-/* Tabs */
-.tabs {
-  display: flex; border: 1px solid var(--border);
-  border-radius: var(--radius-sm); overflow: hidden;
+/* Navigation tabs in app bar */
+.nav-tabs {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--surf-low);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-full);
+  padding: 4px;
 }
-.tab-btn {
-  background: var(--surface); color: var(--text-muted);
-  border: none; cursor: pointer;
-  padding: 6px 18px; font-size: 13px; font-weight: 500;
-  transition: background 0.15s, color 0.15s;
+.nav-tab {
+  background: transparent; border: none; cursor: pointer;
+  padding: 6px 20px; border-radius: var(--r-full);
+  font-size: 13px; font-weight: 500; letter-spacing: 0.1px;
+  color: var(--on-surf-var);
+  transition: background var(--dur-short) var(--ease-std),
+              color var(--dur-short) var(--ease-std);
 }
-.tab-btn:hover { background: var(--surface2); color: var(--text); }
-.tab-btn.active { background: var(--accent); color: #fff; }
+.nav-tab:hover  { background: var(--state-hover); color: var(--on-surface); }
+.nav-tab.active {
+  background: var(--primary-cont);
+  color: var(--on-primary-c);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
 
-/* ── Main ──────────────────────────────────────────────────── */
-main { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+/* Stats chip */
+.stats-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surf-low);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-full);
+  padding: 6px 14px;
+  font-size: 12px; font-weight: 400; color: var(--on-surf-var);
+  white-space: nowrap;
+}
+.stats-chip strong { color: var(--on-surface); font-weight: 500; }
+.stats-chip .sensitive-num { color: var(--error); font-weight: 500; }
+.stats-divider { width: 1px; height: 12px; background: var(--outline-var); }
+
+/* Icon button */
+.icon-btn {
+  width: 40px; height: 40px; border-radius: var(--r-full);
+  background: transparent; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--on-surf-var); font-size: 16px;
+  transition: background var(--dur-short) var(--ease-std),
+              color var(--dur-short) var(--ease-std);
+  flex-shrink: 0;
+}
+.icon-btn:hover { background: var(--state-hover); color: var(--on-surface); }
+
+/* ─────────────────────────────────────────────────────────────────
+   MAIN LAYOUT
+───────────────────────────────────────────────────────────────── */
+main { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
 .view { display: none; }
 .view.active { display: block; }
 
-/* ── Form Elements ─────────────────────────────────────────── */
-textarea, input[type=text], select {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  font-size: 14px;
-  padding: 10px 14px;
+/* Page header */
+.page-header { margin-bottom: 28px; }
+.page-header h2 {
+  font-size: 28px; font-weight: 400; letter-spacing: -0.3px;
+  color: var(--on-surface); line-height: 1.3;
+}
+.page-header p {
+  margin-top: 6px; font-size: 14px;
+  color: var(--on-surf-var); letter-spacing: 0.1px;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   M3 OUTLINED TEXT FIELD (with floating label)
+───────────────────────────────────────────────────────────────── */
+.field-wrap {
+  position: relative;
   width: 100%;
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field-wrap textarea,
+.field-wrap input[type=text] {
+  width: 100%; outline: none; resize: none;
+  background: var(--surf-low);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-lg);
+  color: var(--on-surface);
   font-family: inherit;
+  font-size: 16px; font-weight: 400;
+  line-height: 1.6;
+  padding: 24px 20px 14px;
+  transition: border-color var(--dur-short) var(--ease-std),
+              box-shadow var(--dur-short) var(--ease-std),
+              background var(--dur-short) var(--ease-std);
 }
-textarea:focus, input[type=text]:focus, select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+.field-wrap textarea { min-height: 160px; }
+.field-wrap textarea:hover,
+.field-wrap input[type=text]:hover {
+  border-color: var(--on-surf-var);
+  background: var(--surf);
 }
-textarea { resize: vertical; }
-select { cursor: pointer; }
+.field-wrap textarea:focus,
+.field-wrap input[type=text]:focus {
+  border-color: var(--primary);
+  border-width: 2px;
+  background: var(--surf-low);
+  box-shadow: 0 0 0 4px rgba(197,198,255,0.08);
+}
+.field-label {
+  position: absolute;
+  left: 20px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--on-surf-var);
+  font-size: 16px; font-weight: 400;
+  pointer-events: none;
+  transition: all var(--dur-short) var(--ease-std);
+  background: transparent;
+  padding: 0 4px;
+}
+/* for textarea, top is different */
+.field-wrap textarea ~ .field-label { top: 22px; transform: none; }
+.field-wrap textarea:focus ~ .field-label,
+.field-wrap textarea:not(:placeholder-shown) ~ .field-label {
+  top: 8px; font-size: 12px; color: var(--primary);
+  background: var(--surf-low);
+}
+.field-wrap input:focus ~ .field-label,
+.field-wrap input:not(:placeholder-shown) ~ .field-label {
+  top: 8px; transform: none; font-size: 12px; color: var(--primary);
+  background: var(--surf-low);
+}
 
-/* ── Buttons ───────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────
+   BUTTONS
+───────────────────────────────────────────────────────────────── */
 .btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 18px; border-radius: var(--radius-sm);
-  font-size: 13px; font-weight: 500; border: none; cursor: pointer;
-  transition: background 0.15s, opacity 0.15s;
-  white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: none; cursor: pointer; font-family: inherit;
+  font-weight: 500; letter-spacing: 0.1px; white-space: nowrap;
+  position: relative; overflow: hidden;
+  transition: box-shadow var(--dur-short) var(--ease-std),
+              background var(--dur-short) var(--ease-std),
+              opacity var(--dur-short) var(--ease-std);
 }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover:not(:disabled) { background: var(--accent-h); }
-.btn-ghost {
-  background: var(--surface2); color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-.btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--border2); }
-.btn-danger {
-  background: transparent; color: var(--red);
-  border: 1px solid rgba(248,113,113,0.25);
-  padding: 5px 10px; font-size: 12px;
-}
-.btn-danger:hover { border-color: var(--red); background: var(--red-bg); }
-.btn-sm { padding: 5px 12px; font-size: 12px; }
+.btn:disabled { opacity: 0.38; cursor: not-allowed; pointer-events: none; }
 
-/* ── Spinner ───────────────────────────────────────────────── */
+/* Filled button */
+.btn-filled {
+  background: var(--primary);
+  color: var(--on-primary);
+  border-radius: var(--r-full);
+  padding: 10px 24px; font-size: 14px; height: 40px;
+}
+.btn-filled:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.4); filter: brightness(1.08); }
+.btn-filled:active { filter: brightness(0.96); }
+
+/* Filled tonal button */
+.btn-tonal {
+  background: var(--secondary-cont);
+  color: var(--on-secondary-c);
+  border-radius: var(--r-full);
+  padding: 10px 24px; font-size: 14px; height: 40px;
+}
+.btn-tonal:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.3); filter: brightness(1.1); }
+
+/* Outlined button */
+.btn-outlined {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-full);
+  padding: 10px 24px; font-size: 14px; height: 40px;
+}
+.btn-outlined:hover { background: var(--state-hover); border-color: var(--primary); }
+
+/* Text button */
+.btn-text {
+  background: transparent; color: var(--primary);
+  border-radius: var(--r-full);
+  padding: 10px 12px; font-size: 14px; height: 40px;
+}
+.btn-text:hover { background: var(--state-hover); }
+
+/* Danger text button */
+.btn-danger-text {
+  background: transparent; color: var(--error);
+  border-radius: var(--r-full);
+  padding: 8px 12px; font-size: 13px; height: 36px;
+}
+.btn-danger-text:hover { background: rgba(255,180,171,0.08); }
+
+/* Small variants */
+.btn-sm { height: 32px; padding: 6px 16px; font-size: 13px; }
+
+/* ─────────────────────────────────────────────────────────────────
+   SPINNER
+───────────────────────────────────────────────────────────────── */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner {
-  display: inline-block; width: 14px; height: 14px;
-  border: 2px solid rgba(99,102,241,0.3);
-  border-top-color: var(--accent-h);
+  display: inline-block; width: 16px; height: 16px; flex-shrink: 0;
+  border: 2px solid rgba(197,198,255,0.2);
+  border-top-color: var(--primary);
   border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  flex-shrink: 0;
+  animation: spin 0.75s linear infinite;
 }
 .loading-row {
-  display: flex; align-items: center; gap: 8px;
-  color: var(--text-muted); font-size: 13px;
-  padding: 16px 0;
+  display: flex; align-items: center; gap: 12px;
+  color: var(--on-surf-var); font-size: 14px;
+  padding: 24px 0;
 }
 
-/* ── Cards ─────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────
+   CARDS
+───────────────────────────────────────────────────────────────── */
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px;
+  background: var(--surf-low);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-xl);
+  padding: 20px;
+  position: relative;
+  transition: border-color var(--dur-short) var(--ease-std);
 }
-.card:hover { border-color: var(--border2); }
+.card:hover { border-color: rgba(197,198,255,0.25); }
 
-/* ── Badges & Pills ────────────────────────────────────────── */
-.badge {
-  display: inline-block; padding: 2px 10px;
-  border-radius: var(--radius-pill);
-  font-size: 11px; font-weight: 600;
+/* Elevated card (tinted surface) */
+.card-elevated {
+  background: var(--surf);
+  border-color: transparent;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
 }
-.pill {
-  display: inline-block; padding: 2px 8px;
-  border-radius: var(--radius-pill);
+.card-elevated:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  background: var(--surf-high);
+}
+
+/* Filled tonal card */
+.card-tonal {
+  background: rgba(48, 50, 188, 0.15);
+  border-color: rgba(197,198,255,0.15);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   CHIPS  (M3)
+───────────────────────────────────────────────────────────────── */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 16px; border-radius: var(--r-full);
+  font-size: 14px; font-weight: 500;
+  border: 1px solid var(--outline-var);
+  background: transparent; color: var(--on-surf-var);
+  cursor: pointer; white-space: nowrap;
+  transition: background var(--dur-short) var(--ease-std),
+              color var(--dur-short) var(--ease-std),
+              border-color var(--dur-short) var(--ease-std);
+  user-select: none;
+}
+.chip:hover { background: var(--state-hover); color: var(--on-surface); }
+.chip.active {
+  background: var(--secondary-cont);
+  border-color: transparent;
+  color: var(--on-secondary-c);
+}
+.chip-sm { padding: 4px 12px; font-size: 12px; }
+
+/* Assist chips (tags) */
+.tag-chip {
+  display: inline-flex; align-items: center;
+  padding: 4px 12px; border-radius: var(--r-full);
+  font-size: 12px; font-weight: 500;
+  background: var(--surf-highest);
+  border: 1px solid var(--outline-var);
+  color: var(--on-surf-var);
+  cursor: pointer;
+  transition: all var(--dur-short) var(--ease-std);
+}
+.tag-chip:hover { border-color: var(--primary); color: var(--primary); }
+.tag-chip.active {
+  background: var(--primary-cont);
+  border-color: var(--primary-cont);
+  color: var(--on-primary-c);
+}
+
+/* Data type chips */
+.dt-chip {
+  display: inline-flex; align-items: center;
+  padding: 3px 10px; border-radius: var(--r-full);
   font-size: 11px; font-weight: 500;
-  background: var(--surface2); color: var(--text-muted);
-  border: 1px solid var(--border);
+  background: var(--surf-highest);
+  border: 1px solid var(--outline-var);
+  color: var(--muted);
+  letter-spacing: 0.3px;
 }
-.pill-active {
-  background: rgba(99,102,241,0.25);
-  color: var(--accent-h);
-  border-color: rgba(99,102,241,0.4);
+
+/* ─────────────────────────────────────────────────────────────────
+   CATEGORY BADGES  (M3 tonal)
+───────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 12px; border-radius: var(--r-full);
+  font-size: 12px; font-weight: 500; letter-spacing: 0.2px;
 }
-.pill-tag { cursor: pointer; transition: all 0.15s; }
-.pill-tag:hover { border-color: var(--border2); color: var(--text); }
-.pill-dt { background: var(--bg); color: var(--text-dim); }
+.cat-Person      { background: rgba(173,213,255,0.12); color: #ADD5FF; }
+.cat-Finance     { background: rgba(114,220,136,0.12); color: #72DC88; }
+.cat-Credentials { background: rgba(255,180,171,0.12); color: #FFB4AB; }
+.cat-Event       { background: rgba(197,198,255,0.12); color: #C5C6FF; }
+.cat-Idea        { background: rgba(249,199,79,0.12);  color: #F9C74F; }
+.cat-Task        { background: rgba(253,186,116,0.12); color: #FDBA74; }
+.cat-Health      { background: rgba(237,184,211,0.12); color: #EDB8D3; }
+.cat-Travel      { background: rgba(103,232,249,0.12); color: #67E8F9; }
+.cat-Reference   { background: rgba(167,139,250,0.12); color: #A78BFA; }
+.cat-General     { background: rgba(148,163,184,0.1);  color: #94A3B8; }
 
-/* Category badge colors */
-.cat-Person      { background: #1e3a5f; color: #60a5fa; }
-.cat-Finance     { background: #1a3324; color: #4ade80; }
-.cat-Credentials { background: #3b1a1a; color: #f87171; }
-.cat-Event       { background: #2d1b4e; color: #c084fc; }
-.cat-Idea        { background: #3b2d0a; color: #fbbf24; }
-.cat-Task        { background: #3b2010; color: #fb923c; }
-.cat-Health      { background: #3b1a2e; color: #f472b6; }
-.cat-Travel      { background: #0a2e3b; color: #22d3ee; }
-.cat-Reference   { background: #1a1a3b; color: #818cf8; }
-.cat-General     { background: #1e1e2e; color: #94a3b8; }
-
-/* ── Store Tab ─────────────────────────────────────────────── */
-.store-wrap { max-width: 680px; margin: 0 auto; }
-.store-wrap h2 { font-size: 18px; margin-bottom: 16px; }
-#storeInput { min-height: 140px; }
-.save-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
-.save-status { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 13px; }
-
-#saveResult {
-  margin-top: 18px;
-  animation: fadeIn 0.3s ease;
-}
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.result-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px; }
-.result-title { font-size: 15px; font-weight: 600; line-height: 1.3; }
-.saved-check { color: var(--green); font-size: 13px; font-weight: 600; white-space: nowrap; }
-.result-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-.pills-row { display: flex; flex-wrap: wrap; gap: 4px; }
-
-/* ── Error Banner ──────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────
+   ERROR / STATUS BANNERS
+───────────────────────────────────────────────────────────────── */
 .error-banner {
-  background: var(--red-bg);
-  border: 1px solid rgba(248,113,113,0.3);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  color: var(--red);
-  font-size: 13px;
+  display: flex; align-items: flex-start; gap: 10px;
+  background: rgba(147,0,10,0.2);
+  border: 1px solid rgba(255,180,171,0.25);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  color: var(--error); font-size: 13px;
   margin-top: 12px;
-  display: flex; align-items: flex-start; gap: 8px;
+}
+.success-banner {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--green); font-size: 13px; font-weight: 500;
+}
+.empty-state {
+  text-align: center; color: var(--on-surf-var);
+  padding: 48px 0; font-size: 14px;
+}
+.empty-state-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
+
+/* ─────────────────────────────────────────────────────────────────
+   STORE TAB
+───────────────────────────────────────────────────────────────── */
+.store-wrap { max-width: 720px; }
+
+.save-actions {
+  display: flex; align-items: center; gap: 16px; margin-top: 16px;
+}
+.save-loading {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--on-surf-var); font-size: 13px;
 }
 
-/* ── Ask Tab ───────────────────────────────────────────────── */
-.ask-wrap { max-width: 680px; margin: 0 auto; }
-.ask-wrap h2 { font-size: 18px; margin-bottom: 16px; }
-.ask-row { display: flex; gap: 8px; }
-.ask-row input { flex: 1; }
-
-.answer-box {
-  margin-top: 18px;
-  background: rgba(99,102,241,0.08);
-  border: 1px solid rgba(99,102,241,0.25);
-  border-radius: var(--radius);
-  padding: 18px;
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
 }
-.answer-label { font-size: 11px; font-weight: 600; color: var(--accent-h); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
-.answer-text { color: var(--text); font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+#saveResult { animation: slideUp var(--dur-med) var(--ease-dcel); margin-top: 24px; }
 
-.sources-section { margin-top: 16px; }
-.sources-label { font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
-.source-card {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 12px; padding: 12px 14px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); margin-bottom: 6px;
-  cursor: pointer; transition: border-color 0.15s;
+.result-row {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; gap: 16px; margin-bottom: 14px;
 }
-.source-card:hover { border-color: rgba(99,102,241,0.4); }
-.source-info { min-width: 0; }
-.source-title { font-weight: 500; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sim-score { text-align: right; flex-shrink: 0; }
-.sim-num { font-size: 16px; font-weight: 700; }
-.sim-high { color: var(--green); }
-.sim-mid  { color: #fbbf24; }
-.sim-low  { color: var(--text-muted); }
+.result-title { font-size: 17px; font-weight: 500; line-height: 1.35; color: var(--on-surface); }
+.result-meta  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.result-types { display: flex; flex-wrap: wrap; gap: 6px; }
 
-.empty-state { text-align: center; color: var(--text-dim); padding: 32px 0; font-size: 13px; }
+/* ─────────────────────────────────────────────────────────────────
+   EVENTS WIDGET
+───────────────────────────────────────────────────────────────── */
+.events-section { margin-top: 36px; }
+.section-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-size: 12px; font-weight: 500; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--muted);
+}
+.section-divider {
+  flex: 1; height: 1px; background: var(--outline-var);
+}
 
-/* ── Browse Tab ────────────────────────────────────────────── */
-.filter-bar {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 12px 16px;
-  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+.events-list { display: flex; flex-direction: column; gap: 8px; }
+.event-item {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--surf-low);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-lg);
+  padding: 14px 18px;
+  cursor: pointer;
+  transition: background var(--dur-short) var(--ease-std),
+              border-color var(--dur-short) var(--ease-std),
+              transform var(--dur-short) var(--ease-std);
+}
+.event-item:hover {
+  background: var(--surf);
+  border-color: rgba(197,198,255,0.25);
+  transform: translateY(-1px);
+}
+.event-countdown {
+  flex-shrink: 0; width: 56px; text-align: center;
+  border-radius: var(--r-md); padding: 8px 4px;
+}
+.event-days-num { font-size: 22px; font-weight: 700; line-height: 1; display: block; }
+.event-days-lbl { font-size: 10px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 2px; display: block; }
+
+.days-today  { background: rgba(255,180,171,0.12); color: var(--error); border: 1px solid rgba(255,180,171,0.25); }
+.days-urgent { background: rgba(249,199,79,0.1);   color: var(--amber); border: 1px solid rgba(249,199,79,0.2); }
+.days-soon   { background: rgba(197,198,255,0.1);  color: var(--primary); border: 1px solid rgba(197,198,255,0.2); }
+.days-later  { background: rgba(114,220,136,0.08); color: var(--green); border: 1px solid rgba(114,220,136,0.15); }
+
+.event-content { min-width: 0; flex: 1; }
+.event-title {
+  font-size: 14px; font-weight: 500; color: var(--on-surface);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.event-date  { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+.events-empty {
+  text-align: center; color: var(--on-surf-var);
+  font-size: 13px; padding: 20px 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ASK TAB
+───────────────────────────────────────────────────────────────── */
+.ask-wrap { max-width: 720px; }
+
+.search-row { display: flex; gap: 12px; align-items: center; }
+.search-input {
+  flex: 1;
+  background: var(--surf-low);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-full);
+  color: var(--on-surface);
+  font-family: inherit; font-size: 15px;
+  padding: 0 20px; height: 52px; outline: none; width: 100%;
+  transition: border-color var(--dur-short) var(--ease-std),
+              background var(--dur-short) var(--ease-std),
+              box-shadow var(--dur-short) var(--ease-std);
+}
+.search-input::placeholder { color: var(--muted); }
+.search-input:hover { border-color: var(--on-surf-var); background: var(--surf); }
+.search-input:focus {
+  border-color: var(--primary); border-width: 2px;
+  background: var(--surf-low);
+  box-shadow: 0 0 0 4px rgba(197,198,255,0.08);
+}
+
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+#askResult { animation: fadeSlide var(--dur-med) var(--ease-dcel); margin-top: 24px; }
+
+.answer-card {
+  background: rgba(48, 50, 188, 0.12);
+  border: 1px solid rgba(197,198,255,0.2);
+  border-radius: var(--r-xl);
+  padding: 24px;
   margin-bottom: 20px;
 }
-.filter-bar select { width: auto; padding: 6px 10px; font-size: 13px; }
-.sensitive-toggle {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 12px; border-radius: var(--radius-sm);
-  border: 1px solid var(--border); background: transparent;
-  color: var(--text-muted); cursor: pointer; font-size: 13px;
-  transition: all 0.15s;
+.answer-eyebrow {
+  font-size: 11px; font-weight: 500; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--primary);
+  margin-bottom: 12px;
 }
-.sensitive-toggle:hover { border-color: var(--border2); color: var(--text); }
-.sensitive-toggle.active { border-color: rgba(248,113,113,0.5); color: var(--red); }
-.tag-pills-row { display: flex; flex-wrap: wrap; gap: 6px; }
-.clear-btn {
-  margin-left: auto; background: none; border: none;
-  color: var(--text-dim); cursor: pointer; font-size: 12px;
-  padding: 4px 8px; border-radius: 4px; transition: color 0.15s;
+.answer-text {
+  font-size: 15px; line-height: 1.75;
+  color: var(--on-surface); white-space: pre-wrap;
 }
-.clear-btn:hover { color: var(--text-muted); }
 
-/* Memory Grid */
+.sources-header {
+  font-size: 11px; font-weight: 500; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 10px;
+}
+.source-item {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 14px 16px;
+  background: var(--surf-low); border: 1px solid var(--outline-var);
+  border-radius: var(--r-lg); margin-bottom: 8px;
+  cursor: pointer;
+  transition: background var(--dur-short) var(--ease-std),
+              border-color var(--dur-short) var(--ease-std);
+}
+.source-item:hover { background: var(--surf); border-color: rgba(197,198,255,0.25); }
+.source-item-info { min-width: 0; }
+.source-item-title { font-size: 14px; font-weight: 500; color: var(--on-surface); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.source-score { flex-shrink: 0; text-align: right; }
+.score-num { font-size: 18px; font-weight: 700; line-height: 1; }
+.score-high { color: var(--green); }
+.score-mid  { color: var(--amber); }
+.score-low  { color: var(--muted); }
+.score-lbl  { font-size: 10px; color: var(--muted); letter-spacing: 0.5px; }
+
+/* ─────────────────────────────────────────────────────────────────
+   BROWSE TAB
+───────────────────────────────────────────────────────────────── */
+.filter-surface {
+  background: var(--surf-low);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-xl);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+}
+.filter-divider { width: 1px; height: 24px; background: var(--outline-var); flex-shrink: 0; }
+
+.filter-select {
+  background: var(--surf);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-full);
+  color: var(--on-surface);
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  padding: 6px 16px; cursor: pointer; outline: none;
+  transition: border-color var(--dur-short) var(--ease-std);
+}
+.filter-select:hover { border-color: var(--primary); }
+.filter-select:focus { border-color: var(--primary); }
+
+.sensitive-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: var(--r-full);
+  border: 1px solid var(--outline-var);
+  background: transparent; color: var(--on-surf-var);
+  cursor: pointer; font-size: 13px; font-weight: 500;
+  transition: all var(--dur-short) var(--ease-std);
+}
+.sensitive-chip:hover { border-color: var(--error); color: var(--error); }
+.sensitive-chip.active { background: rgba(255,180,171,0.12); border-color: rgba(255,180,171,0.4); color: var(--error); }
+
+.tags-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.clear-link {
+  margin-left: auto; background: none; border: none;
+  color: var(--muted); cursor: pointer; font-size: 12px; font-family: inherit;
+  font-weight: 500; padding: 4px 8px; border-radius: var(--r-sm);
+  transition: color var(--dur-short) var(--ease-std);
+}
+.clear-link:hover { color: var(--on-surf-var); }
+
+/* Memory grid */
 .memory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
 }
+
 .mem-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px;
-  display: flex; flex-direction: column; gap: 10px;
-  transition: border-color 0.15s;
+  background: var(--surf-low);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-xl);
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 12px;
   position: relative;
+  transition: background var(--dur-short) var(--ease-std),
+              border-color var(--dur-short) var(--ease-std),
+              transform var(--dur-short) var(--ease-std),
+              box-shadow var(--dur-short) var(--ease-std);
 }
-.mem-card:hover { border-color: var(--border2); }
-.mem-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.mem-card:hover {
+  background: var(--surf);
+  border-color: rgba(197,198,255,0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+
+.mem-card-header {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; gap: 8px;
+}
 .mem-card-title {
-  font-weight: 600; font-size: 14px; line-height: 1.3;
-  cursor: pointer; color: var(--text);
+  font-size: 15px; font-weight: 500; line-height: 1.35;
+  color: var(--on-surface); cursor: pointer;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: color var(--dur-short) var(--ease-std);
 }
-.mem-card-title:hover { color: var(--accent-h); }
+.mem-card-title:hover { color: var(--primary); }
+
 .mem-card-preview {
-  color: var(--text-muted); font-size: 12px; line-height: 1.5;
+  font-size: 13px; color: var(--on-surf-var); line-height: 1.6;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
   overflow: hidden;
-  transition: filter 0.3s;
+  transition: filter var(--dur-med) var(--ease-std);
 }
 .blurred { filter: blur(5px); cursor: pointer; user-select: none; }
 .blurred:hover { filter: blur(3px); }
-.mem-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-.mem-card-time { font-size: 11px; color: var(--text-dim); }
-.mem-card-actions { display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s; }
+
+.mem-card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.mem-card-footer {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-top: auto; padding-top: 4px;
+}
+.mem-card-time { font-size: 11px; color: var(--muted); letter-spacing: 0.3px; }
+.mem-card-actions {
+  display: flex; gap: 4px;
+  opacity: 0;
+  transition: opacity var(--dur-short) var(--ease-std);
+}
 .mem-card:hover .mem-card-actions { opacity: 1; }
 
 /* Pagination */
-.pagination { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 24px; }
-.pagination button {
-  background: var(--surface); border: 1px solid var(--border);
-  color: var(--text-muted); padding: 7px 16px;
-  border-radius: var(--radius-sm); cursor: pointer; font-size: 13px;
-  transition: all 0.15s;
+.pagination {
+  display: flex; justify-content: center; align-items: center;
+  gap: 8px; margin-top: 32px;
 }
-.pagination button:hover:not(:disabled) { border-color: var(--border2); color: var(--text); }
-.pagination button:disabled { opacity: 0.35; cursor: not-allowed; }
-.pagination .page-info { color: var(--text-dim); font-size: 13px; }
+.pagination .page-info { font-size: 13px; color: var(--muted); padding: 0 8px; }
 
-/* ── Modals ────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────
+   LOGIN OVERLAY
+───────────────────────────────────────────────────────────────── */
+.login-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(12, 12, 22, 0.95);
+  backdrop-filter: blur(24px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.login-card {
+  background: var(--surf-low);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-2xl);
+  padding: 48px 40px;
+  width: 100%; max-width: 400px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(197,198,255,0.05);
+  text-align: center;
+}
+.login-logo-wrap {
+  width: 72px; height: 72px; border-radius: var(--r-2xl);
+  background: linear-gradient(145deg, var(--primary-cont) 0%, #1A1A38 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; margin: 0 auto 20px;
+  box-shadow: 0 8px 32px rgba(48,50,188,0.4);
+}
+.login-title { font-size: 26px; font-weight: 500; margin-bottom: 6px; }
+.login-sub   { font-size: 14px; color: var(--on-surf-var); margin-bottom: 32px; }
+.login-input-wrap { margin-bottom: 12px; }
+.login-input-wrap input[type=password] {
+  width: 100%;
+  background: var(--surf);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-full);
+  color: var(--on-surface);
+  font-size: 16px; letter-spacing: 0.2em;
+  padding: 14px 20px; outline: none; text-align: center;
+  font-family: inherit;
+  transition: border-color var(--dur-short) var(--ease-std);
+}
+.login-input-wrap input:focus {
+  border-color: var(--primary); border-width: 2px;
+}
+.login-btn { width: 100%; justify-content: center; }
+.login-error {
+  background: rgba(147,0,10,0.2);
+  border: 1px solid rgba(255,180,171,0.2);
+  border-radius: var(--r-md);
+  padding: 10px 16px; color: var(--error);
+  font-size: 13px; margin-top: 12px;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   MODALS / DIALOGS  (M3)
+───────────────────────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 100;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(4px);
+  background: var(--scrim);
+  backdrop-filter: blur(6px);
   display: flex; align-items: center; justify-content: center;
-  padding: 20px;
+  padding: 24px;
 }
-.modal {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+.dialog {
+  background: var(--surf);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-2xl);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
   width: 100%; display: flex; flex-direction: column;
   max-height: 90vh;
+  animation: dialogIn var(--dur-med) var(--ease-dcel);
 }
-.modal-sm { max-width: 540px; }
-.modal-lg { max-width: 740px; }
-.modal-header {
+@keyframes dialogIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.dialog-sm { max-width: 520px; }
+.dialog-lg { max-width: 760px; }
+
+.dialog-header {
   display: flex; justify-content: space-between; align-items: flex-start;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--border);
-  gap: 12px; flex-shrink: 0;
+  padding: 24px 24px 16px; gap: 12px; flex-shrink: 0;
+  border-bottom: 1px solid var(--outline-var);
 }
-.modal-header-title { font-size: 15px; font-weight: 600; line-height: 1.3; }
-.modal-close {
-  background: none; border: none; cursor: pointer;
-  color: var(--text-dim); font-size: 20px; line-height: 1;
-  padding: 0 4px; flex-shrink: 0;
-  transition: color 0.15s;
+.dialog-title { font-size: 18px; font-weight: 500; line-height: 1.35; color: var(--on-surface); }
+.dialog-close {
+  width: 32px; height: 32px; border-radius: var(--r-full);
+  background: transparent; border: none; cursor: pointer;
+  color: var(--muted); font-size: 18px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all var(--dur-short) var(--ease-std);
 }
-.modal-close:hover { color: var(--text); }
-.modal-body { overflow-y: auto; padding: 20px 24px; flex: 1; }
-.modal-footer {
+.dialog-close:hover { background: var(--state-hover); color: var(--on-surface); }
+.dialog-body { overflow-y: auto; padding: 24px; flex: 1; }
+.dialog-footer {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 24px; border-top: 1px solid var(--border);
+  padding: 16px 24px; border-top: 1px solid var(--outline-var);
   gap: 10px; flex-shrink: 0;
 }
-.modal-footer-left { display: flex; gap: 8px; }
+.dialog-footer-start { display: flex; gap: 8px; }
 
 /* Detail sections */
-.detail-section { margin-bottom: 18px; }
+.detail-section { margin-bottom: 20px; }
 .detail-section:last-child { margin-bottom: 0; }
-.section-label { color: var(--text-dim); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
-.code-block {
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 12px 14px;
-  font-size: 13px; color: var(--text-muted); line-height: 1.6;
+.detail-label {
+  font-size: 11px; font-weight: 500; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+}
+.code-surface {
+  background: var(--surf-highest);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  font-size: 13px; color: var(--on-surf-var); line-height: 1.65;
   white-space: pre-wrap; word-break: break-word;
-  max-height: 200px; overflow-y: auto;
+  max-height: 220px; overflow-y: auto;
 }
-.entities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
-.entity-item {
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 10px 12px;
+.entities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
 }
-.entity-key { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-.entity-val { font-size: 12px; color: var(--text-muted); word-break: break-all; line-height: 1.4; }
-.meta-row { display: flex; gap: 24px; flex-wrap: wrap; }
-.meta-item { font-size: 12px; color: var(--text-dim); }
-.meta-item span { color: var(--text-muted); }
+.entity-card {
+  background: var(--surf-highest);
+  border: 1px solid var(--outline-var);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+}
+.entity-key {
+  font-size: 10px; font-weight: 500; letter-spacing: 0.8px;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 5px;
+}
+.entity-val {
+  font-size: 12px; color: var(--on-surf-var);
+  word-break: break-all; line-height: 1.5;
+}
+.meta-grid {
+  display: flex; gap: 28px; flex-wrap: wrap;
+}
+.meta-item { font-size: 12px; color: var(--muted); }
+.meta-item span { color: var(--on-surf-var); font-weight: 400; }
 
-/* Inlined edit textarea */
-#detailEditArea { min-height: 120px; }
-
-/* ── Upcoming Events Widget ─────────────────────────────── */
-.events-widget {
-  max-width: 680px; margin: 28px auto 0;
-}
-.events-widget-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 10px;
-}
-.events-widget-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
-.events-list { display: flex; flex-direction: column; gap: 8px; }
-.event-row {
-  display: flex; align-items: center; gap: 12px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 10px 14px;
-  cursor: pointer; transition: border-color 0.15s;
-}
-.event-row:hover { border-color: var(--border2); }
-.event-days {
-  flex-shrink: 0; min-width: 52px; text-align: center;
-  border-radius: var(--radius-sm); padding: 4px 6px;
-  font-size: 11px; font-weight: 700; line-height: 1.2;
-}
-.event-days-num { font-size: 18px; display: block; }
-.days-today  { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
-.days-urgent { background: rgba(251,191,36,0.12);  color: #fbbf24;     border: 1px solid rgba(251,191,36,0.3);  }
-.days-soon   { background: rgba(192,132,252,0.12); color: #c084fc;     border: 1px solid rgba(192,132,252,0.3); }
-.days-later  { background: rgba(99,102,241,0.1);   color: var(--accent-h); border: 1px solid rgba(99,102,241,0.25); }
-.event-info  { min-width: 0; flex: 1; }
-.event-title { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.event-date  { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-.events-empty { color: var(--text-dim); font-size: 13px; text-align: center; padding: 16px 0; }
+#detailEditArea { min-height: 130px; }
 </style>
 </head>
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar">
-  <div class="navbar-brand">
-    SecondBrain 🧠
-    <span id="ollamaStatus" class="status-dot" title="Server status"></span>
-  </div>
-  <div class="navbar-stats">
-    <span id="statTotal">—</span> memories &bull; <span id="statSensitive" class="red-num">—</span> sensitive
-  </div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('store')" id="tab-store">Store</button>
-      <button class="tab-btn"        onclick="switchTab('ask')"   id="tab-ask">Ask</button>
-      <button class="tab-btn"        onclick="switchTab('browse')" id="tab-browse">Browse</button>
+<!-- ═══════════════════════ LOGIN OVERLAY ═══════════════════════ -->
+<div class="login-overlay hidden" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo-wrap">🧠</div>
+    <div class="login-title">SecondBrain</div>
+    <div class="login-sub">Enter your password to continue</div>
+    <div class="login-input-wrap">
+      <input type="password" id="loginPassword" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') submitLogin()"/>
     </div>
-    <button id="logoutBtn" class="btn btn-ghost btn-sm hidden" onclick="logout()" title="Sign out">
-      Sign out
+    <button class="btn btn-filled login-btn" id="loginBtn" onclick="submitLogin()">
+      Unlock
+    </button>
+    <div id="loginError" class="login-error hidden"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ APP BAR ═══════════════════════ -->
+<header class="app-bar">
+  <div class="app-bar-brand">
+    <div class="app-bar-logo">🧠</div>
+    <span class="app-bar-title">SecondBrain</span>
+    <span id="ollamaStatus" class="status-dot" title="Ollama status"></span>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="tab-store" onclick="switchTab('store')">Store</button>
+    <button class="nav-tab"        id="tab-ask"   onclick="switchTab('ask')">Ask</button>
+    <button class="nav-tab"        id="tab-browse" onclick="switchTab('browse')">Browse</button>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:12px;margin-left:auto">
+    <div class="stats-chip" id="statsChip">
+      <strong id="statTotal">—</strong> memories
+      <div class="stats-divider"></div>
+      <span class="sensitive-num" id="statSensitive">—</span> sensitive
+    </div>
+    <button id="logoutBtn" class="icon-btn hidden" onclick="logout()" title="Sign out">
+      ⎋
     </button>
   </div>
-</nav>
+</header>
 
 <main>
 
 <!-- ═══════════════════════ STORE ═══════════════════════ -->
 <div class="view active" id="view-store">
   <div class="store-wrap">
-    <h2>Store a Memory</h2>
-    <textarea id="storeInput" rows="7"
-      placeholder="Type anything — notes, passwords, account numbers, ideas, contacts, API keys..."></textarea>
-    <div class="save-row">
-      <button class="btn btn-primary" id="saveBtn" onclick="saveMemory()">Save to Memory</button>
-      <div class="save-status hidden" id="saveStatus">
-        <span class="spinner"></span> Analyzing and storing...
+
+    <div class="page-header">
+      <h2>Store a Memory</h2>
+      <p>Anything goes — notes, credentials, ideas, contacts, events…</p>
+    </div>
+
+    <div class="field-wrap">
+      <textarea id="storeInput" placeholder=" " rows="7"></textarea>
+      <label class="field-label" for="storeInput">Type anything and hit Save…</label>
+    </div>
+
+    <div class="save-actions">
+      <button class="btn btn-filled" id="saveBtn" onclick="saveMemory()">
+        Save to Memory
+      </button>
+      <div class="save-loading hidden" id="saveStatus">
+        <span class="spinner"></span>
+        <span>Analyzing and storing…</span>
       </div>
     </div>
     <div id="saveError" class="hidden"></div>
 
-    <div class="card hidden" id="saveResult">
-      <div class="result-header">
+    <div class="card card-tonal hidden" id="saveResult">
+      <div class="result-row">
         <div class="result-title" id="resTitle"></div>
-        <div class="saved-check">✓ Saved!</div>
+        <div class="success-banner">✓ Saved</div>
       </div>
       <div class="result-meta">
         <span id="resCategoryBadge" class="badge"></span>
-        <span id="resSensitiveIcon" class="hidden" title="Sensitive">🔒</span>
+        <span id="resSensitiveIcon" class="hidden">🔒</span>
       </div>
-      <div class="pills-row" id="resDataTypes"></div>
+      <div class="result-types" id="resDataTypes"></div>
     </div>
 
-    <div class="events-widget" id="eventsWidget">
-      <div class="events-widget-header">
-        <span class="events-widget-title">Upcoming Events</span>
+    <!-- Upcoming Events Widget -->
+    <div class="events-section" id="eventsWidget">
+      <div class="section-header">
+        <span class="section-title">Upcoming Events</span>
+        <div class="section-divider"></div>
       </div>
       <div id="eventsList" class="events-list">
-        <div class="events-empty">Loading...</div>
+        <div class="events-empty">Loading…</div>
       </div>
     </div>
+
   </div>
 </div>
 
 <!-- ═══════════════════════ ASK ═══════════════════════ -->
 <div class="view hidden" id="view-ask">
   <div class="ask-wrap">
-    <h2>Ask Your Memory</h2>
-    <div class="ask-row">
-      <input type="text" id="askInput"
-        placeholder="What's my HDFC account number? / Show all API keys..."
+
+    <div class="page-header">
+      <h2>Ask Your Memory</h2>
+      <p>Ask anything in plain English — the AI finds and synthesises the answer.</p>
+    </div>
+
+    <div class="search-row">
+      <input class="search-input" type="text" id="askInput"
+        placeholder="What's my AWS key? / Show finance entries…"
         onkeydown="if(event.key==='Enter') askQuestion()"/>
-      <button class="btn btn-primary" id="askBtn" onclick="askQuestion()">Ask</button>
+      <button class="btn btn-filled" id="askBtn" onclick="askQuestion()">Ask</button>
     </div>
 
     <div class="loading-row hidden" id="askLoading">
-      <span class="spinner"></span> Searching memories and generating answer...
+      <span class="spinner"></span>
+      Searching memories and generating answer…
     </div>
 
     <div class="hidden" id="askResult">
-      <div class="answer-box">
-        <div class="answer-label">Answer</div>
+      <div class="answer-card">
+        <div class="answer-eyebrow">Answer</div>
         <div class="answer-text" id="answerText"></div>
       </div>
-      <div class="sources-section">
-        <div class="sources-label">Sources</div>
-        <div id="sourcesList"></div>
-      </div>
+      <div class="sources-header">Sources</div>
+      <div id="sourcesList"></div>
     </div>
 
     <div class="empty-state hidden" id="askEmpty">
+      <div class="empty-state-icon">🔍</div>
       No relevant memories found. Try storing something first.
     </div>
     <div id="askError" class="hidden"></div>
+
   </div>
 </div>
 
 <!-- ═══════════════════════ BROWSE ═══════════════════════ -->
 <div class="view hidden" id="view-browse">
-  <div class="filter-bar">
-    <select id="categoryFilter" onchange="applyFilters()">
+
+  <div class="filter-surface">
+    <select id="categoryFilter" class="filter-select" onchange="applyFilters()">
       <option value="">All Categories</option>
     </select>
-    <button class="sensitive-toggle" id="sensitiveToggle" onclick="toggleSensitive()">
+    <div class="filter-divider"></div>
+    <button class="sensitive-chip" id="sensitiveToggle" onclick="toggleSensitive()">
       🔒 Sensitive only
     </button>
-    <div class="tag-pills-row" id="tagPills"></div>
-    <button class="clear-btn" onclick="clearFilters()">Clear filters</button>
+    <div class="filter-divider"></div>
+    <div class="tags-row" id="tagPills"></div>
+    <button class="clear-link" onclick="clearFilters()">Clear all</button>
   </div>
 
   <div class="loading-row hidden" id="browseLoading">
-    <span class="spinner"></span> Loading...
+    <span class="spinner"></span> Loading memories…
   </div>
   <div class="empty-state hidden" id="browseEmpty">
+    <div class="empty-state-icon">💭</div>
     No memories found. Store something first!
   </div>
   <div class="memory-grid" id="memoryGrid"></div>
 
   <div class="pagination hidden" id="pagination">
-    <button id="prevBtn" onclick="changePage(-1)" disabled>← Prev</button>
+    <button class="btn btn-outlined btn-sm" id="prevBtn" onclick="changePage(-1)" disabled>← Prev</button>
     <span class="page-info" id="pageInfo"></span>
-    <button id="nextBtn" onclick="changePage(1)">Next →</button>
+    <button class="btn btn-outlined btn-sm" id="nextBtn" onclick="changePage(1)">Next →</button>
   </div>
+
 </div>
 
 </main>
 
-<!-- ═══════════════════════ LOGIN OVERLAY ═══════════════════════ -->
-<div class="login-overlay hidden" id="loginOverlay">
-  <div class="login-box">
-    <div class="login-logo">🧠</div>
-    <div class="login-title">SecondBrain</div>
-    <div class="login-sub">Enter your password to continue</div>
-    <input type="password" id="loginPassword" placeholder="Password"
-      onkeydown="if(event.key==='Enter') submitLogin()"/>
-    <button class="btn btn-primary" id="loginBtn" onclick="submitLogin()">Unlock</button>
-    <div id="loginError" class="login-error hidden"></div>
-  </div>
-</div>
-
-<!-- ═══════════════════════ SOURCE MODAL ═══════════════════════ -->
+<!-- ═══════════════════════ SOURCE DIALOG ═══════════════════════ -->
 <div class="modal-overlay hidden" id="sourceModal" onclick="if(event.target===this)closeSourceModal()">
-  <div class="modal modal-sm">
-    <div class="modal-header">
-      <div class="modal-header-title" id="sourceModalTitle"></div>
-      <button class="modal-close" onclick="closeSourceModal()">✕</button>
+  <div class="dialog dialog-sm">
+    <div class="dialog-header">
+      <div class="dialog-title" id="sourceModalTitle"></div>
+      <button class="dialog-close" onclick="closeSourceModal()">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="code-block" id="sourceModalText" style="max-height:360px"></div>
+    <div class="dialog-body">
+      <div class="code-surface" id="sourceModalText" style="max-height:380px"></div>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════ DETAIL MODAL ═══════════════════════ -->
+<!-- ═══════════════════════ DETAIL DIALOG ═══════════════════════ -->
 <div class="modal-overlay hidden" id="detailModal" onclick="if(event.target===this)closeDetailModal()">
-  <div class="modal modal-lg">
-    <div class="modal-header">
+  <div class="dialog dialog-lg">
+    <div class="dialog-header">
       <div>
-        <div class="flex items-center gap2" style="flex-wrap:wrap">
-          <span class="modal-header-title" id="detailTitle"></span>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="dialog-title" id="detailTitle"></span>
           <span id="detailSensIcon" class="hidden">🔒</span>
         </div>
       </div>
-      <button class="modal-close" onclick="closeDetailModal()">✕</button>
+      <button class="dialog-close" onclick="closeDetailModal()">✕</button>
     </div>
-    <div class="modal-body">
+
+    <div class="dialog-body">
 
       <div class="detail-section">
-        <div class="section-label">Raw Text</div>
-        <div class="code-block" id="detailRawText"></div>
-        <textarea id="detailEditArea" class="hidden" rows="6"></textarea>
+        <div class="detail-label">Content</div>
+        <div class="code-surface" id="detailRawText"></div>
+        <textarea id="detailEditArea" class="hidden" rows="6"
+          style="margin-top:8px"></textarea>
       </div>
 
-      <div class="detail-section flex gap3 wrap" style="align-items:flex-start">
+      <div class="detail-section" style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
         <div>
-          <div class="section-label">Category</div>
+          <div class="detail-label">Category</div>
           <span id="detailCategory" class="badge"></span>
         </div>
         <div>
-          <div class="section-label">Tags</div>
-          <div id="detailTags" class="pills-row"></div>
+          <div class="detail-label">Tags</div>
+          <div id="detailTags" style="display:flex;flex-wrap:wrap;gap:6px"></div>
         </div>
         <div>
-          <div class="section-label">Data Types</div>
-          <div id="detailDataTypes" class="pills-row"></div>
+          <div class="detail-label">Data Types</div>
+          <div id="detailDataTypes" style="display:flex;flex-wrap:wrap;gap:6px"></div>
         </div>
       </div>
 
       <div class="detail-section hidden" id="detailEntitiesSection">
-        <div class="section-label">Extracted Entities</div>
+        <div class="detail-label">Extracted Entities</div>
         <div class="entities-grid" id="detailEntities"></div>
       </div>
 
       <div class="detail-section">
-        <div class="meta-row">
-          <div class="meta-item">Created: <span id="detailCreated"></span></div>
-          <div class="meta-item">Updated: <span id="detailUpdated"></span></div>
+        <div class="meta-grid">
+          <div class="meta-item">Created <span id="detailCreated"></span></div>
+          <div class="meta-item">Updated <span id="detailUpdated"></span></div>
         </div>
       </div>
+
     </div>
-    <div class="modal-footer">
-      <div class="modal-footer-left">
-        <button class="btn btn-ghost btn-sm" id="editBtn" onclick="startEdit()">Edit</button>
-        <button class="btn btn-primary btn-sm hidden" id="saveEditBtn" onclick="saveEdit()">Save Changes</button>
-        <button class="btn btn-ghost btn-sm hidden" id="cancelEditBtn" onclick="cancelEdit()">Cancel</button>
+
+    <div class="dialog-footer">
+      <div class="dialog-footer-start">
+        <button class="btn btn-tonal btn-sm"    id="editBtn"       onclick="startEdit()">Edit</button>
+        <button class="btn btn-filled btn-sm hidden" id="saveEditBtn"   onclick="saveEdit()">Save Changes</button>
+        <button class="btn btn-text btn-sm hidden"   id="cancelEditBtn" onclick="cancelEdit()">Cancel</button>
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="closeDetailModal()">Close</button>
+      <button class="btn btn-text btn-sm" onclick="closeDetailModal()">Close</button>
     </div>
   </div>
 </div>
@@ -718,13 +1209,13 @@ function relTime(ds) {
   if (!ds) return '—';
   const d = new Date(ds.includes('T') ? ds : ds + 'Z');
   const s = Math.floor((Date.now() - d) / 1000);
-  if (s < 60)  return 'just now';
-  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 60)    return 'just now';
+  if (s < 3600)  return Math.floor(s/60) + 'm ago';
   if (s < 86400) return Math.floor(s/3600) + 'h ago';
   const days = Math.floor(s/86400);
   if (days < 30) return days + (days===1?' day':' days') + ' ago';
   const mo = Math.floor(days/30);
-  if (mo < 12) return mo + (mo===1?' month':' months') + ' ago';
+  if (mo < 12)   return mo + (mo===1?' month':' months') + ' ago';
   return Math.floor(mo/12) + 'y ago';
 }
 
@@ -743,12 +1234,7 @@ async function api(method, path, body) {
   if (S.token) opts.headers['Authorization'] = `Bearer ${S.token}`;
   if (body !== undefined) opts.body = JSON.stringify(body);
   const r = await fetch(path, opts);
-  if (r.status === 401) {
-    // Token expired or invalid — force re-login
-    _clearToken();
-    showLogin();
-    throw new Error('Session expired. Please log in again.');
-  }
+  if (r.status === 401) { _clearToken(); showLogin(); throw new Error('Session expired.'); }
   if (r.status === 204) return null;
   const data = await r.json();
   if (!r.ok) throw new Error(data.detail || `HTTP ${r.status}`);
@@ -781,7 +1267,6 @@ function _clearToken() {
   S.token = '';
   localStorage.removeItem('sb_token');
 }
-
 function showLogin() {
   document.getElementById('loginOverlay').classList.remove('hidden');
   document.getElementById('loginPassword').value = '';
@@ -789,76 +1274,54 @@ function showLogin() {
   document.getElementById('logoutBtn').classList.add('hidden');
   setTimeout(() => document.getElementById('loginPassword').focus(), 50);
 }
-
 function hideLogin() {
   document.getElementById('loginOverlay').classList.add('hidden');
   if (S.token) document.getElementById('logoutBtn').classList.remove('hidden');
 }
-
 async function submitLogin() {
   const pwd = document.getElementById('loginPassword').value;
   if (!pwd) return;
   const btn = document.getElementById('loginBtn');
   const errEl = document.getElementById('loginError');
-  btn.disabled = true;
-  btn.textContent = 'Unlocking...';
+  btn.disabled = true; btn.textContent = 'Unlocking…';
   errEl.classList.add('hidden');
   try {
     const r = await fetch('/auth/login', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ password: pwd }),
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || 'Invalid password');
     S.token = data.token || '';
     if (S.token) localStorage.setItem('sb_token', S.token);
-    hideLogin();
-    initApp();
+    hideLogin(); initApp();
   } catch (e) {
-    errEl.textContent = e.message;
-    errEl.classList.remove('hidden');
+    errEl.textContent = e.message; errEl.classList.remove('hidden');
     document.getElementById('loginPassword').value = '';
     document.getElementById('loginPassword').focus();
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Unlock';
+    btn.disabled = false; btn.textContent = 'Unlock';
   }
 }
-
 async function logout() {
   try { await api('POST', '/auth/logout'); } catch {}
-  _clearToken();
-  showLogin();
+  _clearToken(); showLogin();
 }
 
 /* ────────────────────────────────────────────────
    INIT
 ──────────────────────────────────────────────── */
 async function init() {
-  // Check if auth is required
   try {
     const status = await fetch('/auth/status').then(r => r.json());
     if (status.auth_enabled) {
-      // Validate stored token by hitting a protected endpoint
       if (S.token) {
-        const check = await fetch('/api/stats', {
-          headers: { 'Authorization': `Bearer ${S.token}` }
-        });
-        if (check.status === 401) {
-          _clearToken();
-          showLogin();
-          return;
-        }
-      } else {
-        showLogin();
-        return;
-      }
+        const check = await fetch('/api/stats', { headers: { 'Authorization': `Bearer ${S.token}` } });
+        if (check.status === 401) { _clearToken(); showLogin(); return; }
+      } else { showLogin(); return; }
     }
   } catch {}
-  // Auth not required or token is valid
-  hideLogin();
-  initApp();
+  hideLogin(); initApp();
 }
 
 async function initApp() {
@@ -878,7 +1341,6 @@ async function refreshStats() {
     const s = await api('GET', '/api/stats');
     document.getElementById('statTotal').textContent = s.total;
     document.getElementById('statSensitive').textContent = s.sensitive;
-    // Populate category filter (avoid duplicates)
     const sel = document.getElementById('categoryFilter');
     const existing = new Set([...sel.options].map(o => o.value));
     s.by_category.forEach(({category}) => {
@@ -898,7 +1360,7 @@ async function loadTagPills() {
     wrap.innerHTML = '';
     tags.slice(0, 12).forEach(({tag, count}) => {
       const btn = document.createElement('button');
-      btn.className = 'pill pill-tag';
+      btn.className = 'tag-chip chip-sm';
       btn.textContent = `${tag} (${count})`;
       btn.dataset.tag = tag;
       btn.onclick = () => toggleTagFilter(tag, btn);
@@ -914,9 +1376,9 @@ async function saveMemory() {
   const text = document.getElementById('storeInput').value.trim();
   if (!text) return;
 
-  const btn = document.getElementById('saveBtn');
+  const btn    = document.getElementById('saveBtn');
   const status = document.getElementById('saveStatus');
-  const errEl = document.getElementById('saveError');
+  const errEl  = document.getElementById('saveError');
   const result = document.getElementById('saveResult');
 
   btn.disabled = true;
@@ -924,9 +1386,8 @@ async function saveMemory() {
   result.classList.add('hidden');
   errEl.className = 'hidden';
 
-  // Timeout warning after 15s
   const warnTimer = setTimeout(() => {
-    status.innerHTML = '<span class="spinner"></span> Still working — model may be loading...';
+    status.innerHTML = '<span class="spinner"></span><span>Still working — model may be loading…</span>';
   }, 15000);
 
   try {
@@ -942,7 +1403,7 @@ async function saveMemory() {
 
     const dtWrap = document.getElementById('resDataTypes');
     dtWrap.innerHTML = (data.data_types || []).map(dt =>
-      `<span class="pill pill-dt">${h(dt)}</span>`
+      `<span class="dt-chip">${h(dt)}</span>`
     ).join('');
 
     result.classList.remove('hidden');
@@ -955,7 +1416,7 @@ async function saveMemory() {
   } finally {
     btn.disabled = false;
     status.classList.add('hidden');
-    status.innerHTML = '<span class="spinner"></span> Analyzing and storing...';
+    status.innerHTML = '<span class="spinner"></span><span>Analyzing and storing…</span>';
   }
 }
 
@@ -966,11 +1427,11 @@ async function askQuestion() {
   const q = document.getElementById('askInput').value.trim();
   if (!q) return;
 
-  const btn = document.getElementById('askBtn');
+  const btn     = document.getElementById('askBtn');
   const loading = document.getElementById('askLoading');
-  const result = document.getElementById('askResult');
-  const empty = document.getElementById('askEmpty');
-  const errEl = document.getElementById('askError');
+  const result  = document.getElementById('askResult');
+  const empty   = document.getElementById('askEmpty');
+  const errEl   = document.getElementById('askError');
 
   btn.disabled = true;
   loading.classList.remove('hidden');
@@ -979,17 +1440,14 @@ async function askQuestion() {
   errEl.className = 'hidden';
 
   const warnTimer = setTimeout(() => {
-    loading.innerHTML = '<span class="spinner"></span> Still thinking — model may be loading (first run is slow)...';
+    loading.innerHTML = '<span class="spinner"></span>Still thinking — model may be loading…';
   }, 20000);
 
   try {
     const data = await api('POST', '/api/recall', { question: q, top_k: 5, threshold: 0.25 });
     clearTimeout(warnTimer);
 
-    if (!data.sources || data.sources.length === 0) {
-      empty.classList.remove('hidden');
-      return;
-    }
+    if (!data.sources || data.sources.length === 0) { empty.classList.remove('hidden'); return; }
 
     document.getElementById('answerText').textContent = data.answer;
 
@@ -997,17 +1455,17 @@ async function askQuestion() {
     list.innerHTML = '';
     data.sources.forEach(src => {
       const simPct = Math.round(src.similarity * 100);
-      const simClass = simPct >= 70 ? 'sim-high' : simPct >= 50 ? 'sim-mid' : 'sim-low';
+      const simClass = simPct >= 70 ? 'score-high' : simPct >= 50 ? 'score-mid' : 'score-low';
       const div = document.createElement('div');
-      div.className = 'source-card';
+      div.className = 'source-item';
       div.innerHTML = `
-        <div class="source-info">
-          <div class="source-title">${src.is_sensitive ? '🔒 ' : ''}${h(src.title || 'Untitled')}</div>
+        <div class="source-item-info">
+          <div class="source-item-title">${src.is_sensitive ? '🔒 ' : ''}${h(src.title || 'Untitled')}</div>
           <span class="badge ${catClass(src.category)}">${h(src.category)}</span>
         </div>
-        <div class="sim-score">
-          <div class="sim-num ${simClass}">${simPct}%</div>
-          <div style="font-size:10px;color:var(--text-dim)">match</div>
+        <div class="source-score">
+          <div class="score-num ${simClass}">${simPct}%</div>
+          <div class="score-lbl">match</div>
         </div>`;
       div.onclick = () => openSourceModal(src.id, src.title);
       list.appendChild(div);
@@ -1020,7 +1478,7 @@ async function askQuestion() {
   } finally {
     btn.disabled = false;
     loading.classList.add('hidden');
-    loading.innerHTML = '<span class="spinner"></span> Searching memories and generating answer...';
+    loading.innerHTML = '<span class="spinner"></span>Searching memories and generating answer…';
   }
 }
 
@@ -1029,7 +1487,7 @@ async function askQuestion() {
 ──────────────────────────────────────────────── */
 async function openSourceModal(id, title) {
   document.getElementById('sourceModalTitle').textContent = title || 'Memory';
-  document.getElementById('sourceModalText').textContent = 'Loading...';
+  document.getElementById('sourceModalText').textContent = 'Loading…';
   document.getElementById('sourceModal').classList.remove('hidden');
   try {
     const d = await api('GET', `/api/memory/${id}`);
@@ -1038,17 +1496,15 @@ async function openSourceModal(id, title) {
     document.getElementById('sourceModalText').textContent = 'Failed to load.';
   }
 }
-function closeSourceModal() {
-  document.getElementById('sourceModal').classList.add('hidden');
-}
+function closeSourceModal() { document.getElementById('sourceModal').classList.add('hidden'); }
 
 /* ────────────────────────────────────────────────
    BROWSE TAB
 ──────────────────────────────────────────────── */
 async function loadBrowse() {
-  const grid = document.getElementById('memoryGrid');
+  const grid    = document.getElementById('memoryGrid');
   const loading = document.getElementById('browseLoading');
-  const empty = document.getElementById('browseEmpty');
+  const empty   = document.getElementById('browseEmpty');
 
   grid.innerHTML = '';
   empty.classList.add('hidden');
@@ -1056,7 +1512,7 @@ async function loadBrowse() {
 
   const p = new URLSearchParams({ limit: S.pageSize, offset: S.page * S.pageSize });
   if (S.filters.category) p.set('category', S.filters.category);
-  if (S.filters.tag) p.set('tag', S.filters.tag);
+  if (S.filters.tag)      p.set('tag', S.filters.tag);
   if (S.filters.sensitive) p.set('sensitive', 'true');
 
   try {
@@ -1071,9 +1527,8 @@ async function loadBrowse() {
 
     data.items.forEach(m => grid.appendChild(makeCard(m)));
 
-    const total = data.total;
-    const pages = Math.ceil(total / S.pageSize);
-    const pag = document.getElementById('pagination');
+    const pages = Math.ceil(data.total / S.pageSize);
+    const pag   = document.getElementById('pagination');
     if (pages > 1) {
       pag.classList.remove('hidden');
       document.getElementById('pageInfo').textContent = `Page ${S.page + 1} of ${pages}`;
@@ -1090,11 +1545,11 @@ async function loadBrowse() {
 
 const revealTimers = {};
 function makeCard(m) {
-  const card = document.createElement('div');
+  const card    = document.createElement('div');
   card.className = 'mem-card';
-  const rawId = `raw-${m.id}`;
-  const blurClass = m.is_sensitive ? 'blurred' : '';
-  const tags = (m.tags || []).slice(0, 4).map(t => `<span class="pill">${h(t)}</span>`).join('');
+  const rawId   = `raw-${m.id}`;
+  const blurCls = m.is_sensitive ? 'blurred' : '';
+  const tags    = (m.tags || []).slice(0, 4).map(t => `<span class="tag-chip">${h(t)}</span>`).join('');
 
   card.innerHTML = `
     <div class="mem-card-header">
@@ -1102,15 +1557,15 @@ function makeCard(m) {
       ${m.is_sensitive ? '<span title="Sensitive">🔒</span>' : ''}
     </div>
     <span class="badge ${catClass(m.category)}">${h(m.category)}</span>
-    <div id="${rawId}" class="mem-card-preview ${blurClass}"
+    <div id="${rawId}" class="mem-card-preview ${blurCls}"
       ${m.is_sensitive ? `onclick="revealCard('${rawId}')" title="Click to reveal"` : ''}
     >${h(m.raw_text || '')}</div>
-    ${tags ? `<div class="pills-row">${tags}</div>` : ''}
+    ${tags ? `<div class="mem-card-tags">${tags}</div>` : ''}
     <div class="mem-card-footer">
       <span class="mem-card-time">${relTime(m.created_at)}</span>
       <div class="mem-card-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openDetailModal('${m.id}')">View</button>
-        <button class="btn btn-danger" onclick="deleteMemory(event,'${m.id}')">Delete</button>
+        <button class="btn btn-outlined btn-sm" onclick="openDetailModal('${m.id}')">View</button>
+        <button class="btn btn-danger-text btn-sm" onclick="deleteMemory(event,'${m.id}')">Delete</button>
       </div>
     </div>`;
   return card;
@@ -1119,9 +1574,7 @@ function makeCard(m) {
 function revealCard(rawId) {
   const el = document.getElementById(rawId);
   if (!el) return;
-  el.classList.remove('blurred');
-  el.onclick = null;
-  el.title = '';
+  el.classList.remove('blurred'); el.onclick = null; el.title = '';
   clearTimeout(revealTimers[rawId]);
   revealTimers[rawId] = setTimeout(() => {
     el.classList.add('blurred');
@@ -1135,39 +1588,31 @@ function revealCard(rawId) {
 ──────────────────────────────────────────────── */
 function applyFilters() {
   S.filters.category = document.getElementById('categoryFilter').value;
-  S.page = 0;
-  loadBrowse();
+  S.page = 0; loadBrowse();
 }
-
 function toggleSensitive() {
   S.filters.sensitive = !S.filters.sensitive;
   document.getElementById('sensitiveToggle').classList.toggle('active', S.filters.sensitive);
-  S.page = 0;
-  loadBrowse();
+  S.page = 0; loadBrowse();
 }
-
 function toggleTagFilter(tag, btn) {
   if (S.filters.tag === tag) {
     S.filters.tag = '';
-    btn.classList.remove('pill-active');
+    btn.classList.remove('active');
   } else {
-    document.querySelectorAll('#tagPills .pill-tag').forEach(b => b.classList.remove('pill-active'));
+    document.querySelectorAll('#tagPills .tag-chip').forEach(b => b.classList.remove('active'));
     S.filters.tag = tag;
-    btn.classList.add('pill-active');
+    btn.classList.add('active');
   }
-  S.page = 0;
-  loadBrowse();
+  S.page = 0; loadBrowse();
 }
-
 function clearFilters() {
   S.filters = { category: '', tag: '', sensitive: false };
   document.getElementById('categoryFilter').value = '';
   document.getElementById('sensitiveToggle').classList.remove('active');
-  document.querySelectorAll('#tagPills .pill-tag').forEach(b => b.classList.remove('pill-active'));
-  S.page = 0;
-  loadBrowse();
+  document.querySelectorAll('#tagPills .tag-chip').forEach(b => b.classList.remove('active'));
+  S.page = 0; loadBrowse();
 }
-
 function changePage(dir) {
   S.page = Math.max(0, S.page + dir);
   loadBrowse();
@@ -1182,11 +1627,8 @@ async function deleteMemory(e, id) {
   if (!confirm('Delete this memory? This cannot be undone.')) return;
   try {
     await api('DELETE', `/api/memory/${id}`);
-    loadBrowse();
-    refreshStats();
-  } catch (err) {
-    alert('Delete failed: ' + err.message);
-  }
+    loadBrowse(); refreshStats();
+  } catch (err) { alert('Delete failed: ' + err.message); }
 }
 
 /* ────────────────────────────────────────────────
@@ -1196,15 +1638,12 @@ async function openDetailModal(id) {
   S.currentDetailId = id;
   cancelEdit();
   document.getElementById('detailModal').classList.remove('hidden');
-
-  // Clear previous content
-  document.getElementById('detailTitle').textContent = 'Loading...';
+  document.getElementById('detailTitle').textContent = 'Loading…';
   document.getElementById('detailRawText').textContent = '';
   document.getElementById('detailEntitiesSection').classList.add('hidden');
 
   try {
     const m = await api('GET', `/api/memory/${id}`);
-
     document.getElementById('detailTitle').textContent = m.title || 'Untitled';
     document.getElementById('detailSensIcon').classList.toggle('hidden', !m.is_sensitive);
     document.getElementById('detailRawText').textContent = m.raw_text;
@@ -1215,16 +1654,17 @@ async function openDetailModal(id) {
     catEl.className = `badge ${catClass(m.category)}`;
 
     document.getElementById('detailTags').innerHTML =
-      (m.tags || []).map(t => `<span class="pill">${h(t)}</span>`).join('') || '<span class="dim small">none</span>';
+      (m.tags || []).map(t => `<span class="tag-chip">${h(t)}</span>`).join('') ||
+      '<span style="color:var(--muted);font-size:13px">none</span>';
 
     document.getElementById('detailDataTypes').innerHTML =
-      (m.data_types || []).map(dt => `<span class="pill pill-dt">${h(dt)}</span>`).join('') || '<span class="dim small">none</span>';
+      (m.data_types || []).map(dt => `<span class="dt-chip">${h(dt)}</span>`).join('') ||
+      '<span style="color:var(--muted);font-size:13px">none</span>';
 
     document.getElementById('detailCreated').textContent = fmtDate(m.created_at);
     document.getElementById('detailUpdated').textContent = m.updated_at ? fmtDate(m.updated_at) : '—';
 
-    // Entities
-    const ents = m.extracted_entities || {};
+    const ents  = m.extracted_entities || {};
     const entEl = document.getElementById('detailEntities');
     entEl.innerHTML = '';
     let hasEnts = false;
@@ -1236,7 +1676,7 @@ async function openDetailModal(id) {
       hasEnts = true;
       const display = Array.isArray(val) ? val.join(', ') : (typeof val === 'object' ? JSON.stringify(val) : String(val));
       const div = document.createElement('div');
-      div.className = 'entity-item';
+      div.className = 'entity-card';
       div.innerHTML = `<div class="entity-key">${h(label)}</div><div class="entity-val">${h(display)}</div>`;
       entEl.appendChild(div);
     });
@@ -1250,7 +1690,6 @@ function closeDetailModal() {
   document.getElementById('detailModal').classList.add('hidden');
   S.currentDetailId = null;
 }
-
 function startEdit() {
   document.getElementById('detailRawText').classList.add('hidden');
   document.getElementById('detailEditArea').classList.remove('hidden');
@@ -1258,7 +1697,6 @@ function startEdit() {
   document.getElementById('saveEditBtn').classList.remove('hidden');
   document.getElementById('cancelEditBtn').classList.remove('hidden');
 }
-
 function cancelEdit() {
   document.getElementById('detailRawText').classList.remove('hidden');
   document.getElementById('detailEditArea').classList.add('hidden');
@@ -1266,26 +1704,19 @@ function cancelEdit() {
   document.getElementById('saveEditBtn').classList.add('hidden');
   document.getElementById('cancelEditBtn').classList.add('hidden');
 }
-
 async function saveEdit() {
   const text = document.getElementById('detailEditArea').value.trim();
   if (!text || !S.currentDetailId) return;
-
   const btn = document.getElementById('saveEditBtn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Saving...';
-
+  btn.innerHTML = '<span class="spinner"></span> Saving…';
   try {
     await api('PUT', `/api/memory/${S.currentDetailId}`, { raw_text: text });
     await openDetailModal(S.currentDetailId);
     cancelEdit();
     if (S.tab === 'browse') loadBrowse();
-  } catch (e) {
-    alert('Save failed: ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Save Changes';
-  }
+  } catch (e) { alert('Save failed: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
 }
 
 /* ────────────────────────────────────────────────
@@ -1294,33 +1725,31 @@ async function saveEdit() {
 async function loadUpcomingEvents() {
   const list = document.getElementById('eventsList');
   try {
-    const data = await api('GET', '/api/events/upcoming?limit=5');
+    const data   = await api('GET', '/api/events/upcoming?limit=5');
     const events = data.events || [];
 
     if (!events.length) {
-      list.innerHTML = '<div class="events-empty">No upcoming events. Store a memory with a future date!</div>';
+      list.innerHTML = '<div class="events-empty">No upcoming events — store a memory with a future date to see it here.</div>';
       return;
     }
 
     list.innerHTML = events.map(ev => {
       const d = ev.days_left;
-      let daysClass, daysLabel;
-      if (d === 0)      { daysClass = 'days-today';  daysLabel = 'Today'; }
-      else if (d <= 2)  { daysClass = 'days-urgent'; daysLabel = d + 'd'; }
-      else if (d <= 7)  { daysClass = 'days-soon';   daysLabel = d + 'd'; }
-      else              { daysClass = 'days-later';   daysLabel = d + 'd'; }
+      let cls, lbl;
+      if (d === 0)     { cls = 'days-today';  lbl = 'Today'; }
+      else if (d <= 2) { cls = 'days-urgent'; lbl = d + 'd'; }
+      else if (d <= 7) { cls = 'days-soon';   lbl = d + 'd'; }
+      else             { cls = 'days-later';  lbl = d + 'd'; }
 
-      const numHtml = d === 0
-        ? `<span class="event-days-num">!</span>`
-        : `<span class="event-days-num">${d}</span>`;
+      const numHtml = d === 0 ? `<span class="event-days-num">!</span>` : `<span class="event-days-num">${d}</span>`;
 
       return `
-        <div class="event-row" onclick="openDetailModal('${h(ev.id)}')">
-          <div class="event-days ${daysClass}">
+        <div class="event-item" onclick="openDetailModal('${h(ev.id)}')">
+          <div class="event-countdown ${cls}">
             ${numHtml}
-            <span>${h(daysLabel)}</span>
+            <span class="event-days-lbl">${h(lbl)}</span>
           </div>
-          <div class="event-info">
+          <div class="event-content">
             <div class="event-title">${ev.is_sensitive ? '🔒 ' : ''}${h(ev.title)}</div>
             <div class="event-date">${h(ev.date_str)}</div>
           </div>
@@ -1335,16 +1764,13 @@ async function loadUpcomingEvents() {
    KEYBOARD
 ──────────────────────────────────────────────── */
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    closeDetailModal();
-    closeSourceModal();
-  }
+  if (e.key === 'Escape') { closeDetailModal(); closeSourceModal(); }
 });
 
 /* ────────────────────────────────────────────────
    BOOT
 ──────────────────────────────────────────────── */
-init();  // checks auth first, then calls initApp()
+init();
 </script>
 </body>
 </html>
